@@ -1,4 +1,4 @@
-﻿@layout AdminLayout
+﻿@layout PemohonLayout
 @page "/pemohon"
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -21,12 +21,9 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        if (user.Identity.IsAuthenticated)
+        if (!user.Identity.IsAuthenticated || !user.IsInRole("Pemohon"))
         {
-            if (user.IsInRole("Admin"))
-                nav.NavigateTo("admin");
-            if (user.IsInRole("Pemohon"))
-                nav.NavigateTo("pemohon");
+            nav.NavigateTo("/account/login");
         }
     }
 

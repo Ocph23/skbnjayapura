@@ -7,7 +7,7 @@
 
 @inject ILocalStorageService localService
 @inject AuthenticationStateProvider authStateProvider
-@inject IHttpClientFactory _clientFactory
+@inject HttpClient httpClient
 
 @inject NavigationManager navManager
 
@@ -76,7 +76,6 @@
 
     async void LoginAction()
     {
-        var httpClient = _clientFactory.CreateClient("All");
         var response = await httpClient.PostAsJsonAsync("api/account/login", new LoginRequest(model.UserName, model.Password));
         if (response.IsSuccessStatusCode)
         {

@@ -16,8 +16,8 @@
                     <tr>
                         <th>No</th>
                         <th>Nama Persyaratan</th>
-                        <th>Photo</th>
                         <th>Keterangan</th>
+                        <th>Photo</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -25,45 +25,21 @@
 
                     @if (persyaratans != null)
                     {
-                        @foreach (var item in persyaratans)
-                        {
+                        @foreach (var item in persyaratans.Select((data,index)=> new {data,index}))
+                            {
                             <tr>
-                                <td><i class="fab fa-angular fa-lg text-danger me-3"></i> <strong>Angular Project</strong></td>
-                                <td>Albert Cook</td>
+                                <td>@(item.index+1)</td>
+                                <td>@item.data.Nama</td>
+                                <td>@item.data.Keterangan</td>
+                                <td><span class="badge bg-label-primary me-1">@(item.data.Aktif ? "Active" : "No")</span></td>
                                 <td>
-                                    <ul class="list-unstyled users-list m-0 avatar-group d-flex align-items-center">
-                                        <li data-bs-toggle="tooltip"
-                                            data-popup="tooltip-custom"
-                                            data-bs-placement="top"
-                                            class="avatar avatar-xs pull-up"
-                                            title="Lilian Fuller">
-                                            <img src="../assets/img/avatars/5.png" alt="Avatar" class="rounded-circle" />
-                                        </li>
-                                        <li data-bs-toggle="tooltip"
-                                            data-popup="tooltip-custom"
-                                            data-bs-placement="top"
-                                            class="avatar avatar-xs pull-up"
-                                            title="Sophia Wilkerson">
-                                            <img src="../assets/img/avatars/6.png" alt="Avatar" class="rounded-circle" />
-                                        </li>
-                                        <li data-bs-toggle="tooltip"
-                                            data-popup="tooltip-custom"
-                                            data-bs-placement="top"
-                                            class="avatar avatar-xs pull-up"
-                                            title="Christina Parker">
-                                            <img src="../assets/img/avatars/7.png" alt="Avatar" class="rounded-circle" />
-                                        </li>
-                                    </ul>
-                                </td>
-                                <td><span class="badge bg-label-primary me-1">Active</span></td>
-                                <td>
-                                    <div class="dropdown">
+                                    <div class="dropdown" style="position:inherit !important">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="javascript:void(0);"><i class="bx bx-edit-alt me-1"></i> Edit</a>
-                                            <a class="dropdown-item" href="javascript:void(0);"><i class="bx bx-trash me-1"></i> Delete</a>
+                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                                            <a class="dropdown-item" @onclick="@(()=>DeleteAction(item.data))"><i class="bx bx-trash me-1"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -97,9 +73,20 @@
             <div class="mb-3">
                 <div class="form-check">
                     <InputCheckbox @bind-Value="model.IsPhoto"></InputCheckbox>
-                    <label class="form-check-label" > Photo </label>
+                    <label class="form-check-label"> Photo </label>
                 </div>
             </div>
+
+            @if (model.Id > 0)
+            {
+                <div class="mb-3">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="model.Aktif"></InputCheckbox>
+                        <label class="form-check-label"> Aktif </label>
+                    </div>
+                </div>
+            }
+
             <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
                 <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
                 <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save changes</Button>
@@ -108,14 +95,17 @@
     </BodyTemplate>
 </Modal>
 
+<ConfirmDialog @ref="confirmDialog" />
+
 @inject HttpClient httpClient
 @inject ILocalStorageService localService
 
 @code {
-
+    [Inject] protected ToastService ToastService { get; set; }
     ICollection<Persyaratan> persyaratans;
     Persyaratan model = new Persyaratan();
     private Modal modal;
+    private ConfirmDialog confirmDialog;
 
     //  List<ToastMessage> messages = new List<ToastMessage>();
 
@@ -131,6 +121,15 @@
         }
     }
 
+    async Task EditAction(Persyaratan data)
+    {
+        model.Id = data.Id;
+        model.Nama = data.Nama;
+        model.Keterangan = data.Keterangan;
+        model.IsPhoto = data.IsPhoto;
+        model.Aktif = data.Aktif;
+        await modal.ShowAsync();
+    }
 
     async Task SaveAction()
     {
@@ -144,22 +143,35 @@
                     var result = await httpResponse.GetResult<Persyaratan>();
                     if (result == null)
                         throw new SystemException("Data tidak berhasil disimpan !");
-
                     persyaratans.Add(result);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await modal.HideAsync();
                     return;
                 }
 
-                  throw new SystemException( await  httpResponse.Error());
+                throw new SystemException(await httpResponse.Error());
 
             }
             else
             {
-                var httpResponse = await httpClient.PutAsJsonAsync<Persyaratan>("api/persyaratan", model);
+                var httpResponse = await httpClient.PutAsJsonAsync<Persyaratan>($"api/persyaratan/{model.Id}", model);
                 if (httpResponse.IsSuccessStatusCode)
                 {
                     var result = await httpResponse.GetResult<Persyaratan>();
                     if (result == null)
                         throw new SystemException("Data tidak berhasil diubah !");
+
+                    var data = persyaratans.SingleOrDefault(x => x.Id == model.Id);
+                    if (data != null)
+                    {
+                        data.Id = result.Id;
+                        data.Nama = result.Nama;
+                        data.Keterangan = result.Keterangan;
+                        data.IsPhoto = result.IsPhoto;
+                        data.Aktif = result.Aktif;
+                    }
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await modal.HideAsync();
                     return;
                 }
 
@@ -168,14 +180,50 @@
         }
         catch (Exception ex)
         {
-            await ToasMessage.ShowMessage(ex.Message, ToastType.Danger, "Error");
-            StateHasChanged();
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    async Task DeleteAction(Persyaratan value)
+    {
+        try
+        {
+            var options = new ConfirmDialogOptions
+                {
+                    YesButtonText = "OK",
+                    YesButtonColor = ButtonColor.Success,
+                    NoButtonText = "CANCEL",
+                    NoButtonColor = ButtonColor.Danger
+                };
+            var confirmation = await confirmDialog.ShowAsync(
+                title: "Delete",
+                message1: "Hapus Persyaratan ??",
+                confirmDialogOptions: options);
+            if (confirmation)
+            {
+                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/persyaratan/{value.Id}");
+                if (deleted)
+                {
+
+                    var data = persyaratans.SingleOrDefault(x => x.Id == value.Id);
+                    persyaratans.Remove(data);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil Hapus Data !"));
+                    await modal.HideAsync();
+                    await InvokeAsync(() => StateHasChanged());
+                    return;
+                }
+                throw new SystemException("Data tidak berhasil dihapus !");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
         }
     }
 
     private async Task OnShowModalClick()
     {
-        model = new Persyaratan();
+        model = new Persyaratan() { Aktif = true };
         await modal?.ShowAsync();
     }
     private async Task OnHideModalClick()

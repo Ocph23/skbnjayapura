@@ -12,7 +12,7 @@ namespace skbnjayapura.Shared
         public string Nama { get; set; }
         public string Keterangan { get; set; }
         public bool IsPhoto { get; set; }
-        public string Aktif { get; set; }
+        public bool Aktif { get; set; }
 
     }
 }

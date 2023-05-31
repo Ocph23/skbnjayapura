@@ -1,0 +1,113 @@
+﻿@layout AccountLayout
+@page "/account/register"
+@using System.Text.Json;
+@using FluentValidation;
+@using Morris.Blazor.FluentValidation;
+@using Morris.Blazor.Validation;
+
+@inject ILocalStorageService localService
+@inject AuthenticationStateProvider authStateProvider
+@inject HttpClient httpClient
+@inject NavigationManager navManager
+
+<div class="container-xxl">
+    <div class="authentication-wrapper authentication-basic container-p-y">
+        <div class="authentication-inner">
+            <!-- Register -->
+            <div class="card">
+                <div class="card-body">
+                    <!-- Logo -->
+                    <div style="display:flex; justify-content:center; align-items:center; flex-direction:column; width:100%">
+                        <a href="/">
+                            <img style="width:75px" src="/polri.png" />
+                        </a>
+                        <h6 class="mt-3 mb-0">SATUAN NARKOBA</h6>
+                        <h6 class="mt-1 mb-0">POLRES JAYAPURA</h6>
+                    </div>
+                    <!-- /Logo -->
+
+                    <h6 class="mt-4 mb-3">REGISTER</h6>
+
+                    <EditForm Model="@model" OnValidSubmit="RegisterAction">
+                        <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<RegisterValidator>()) />
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email or Username</label>
+                            <InputText type="text" @bind-Value="model.Email" class="form-control"></InputText>
+                            <ValidationMessage For="@(() => model.Email)" />
+
+                        </div>
+                        <div class="mb-3 form-password-toggle">
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label" for="password">Password</label>
+                            </div>
+                            <div class="input-group input-group-merge">
+                                <InputText type="password" @bind-Value="@model.Password" class="form-control"></InputText>
+                                <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                            </div>
+                            <ValidationMessage For="@(() => model.Password)" />
+                        </div>
+                        <div class="mb-3 form-password-toggle">
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label" for="password">Confirm Password</label>
+                            </div>
+                            <div class="input-group input-group-merge">
+                                <InputText type="password" @bind-Value="@model.ConfirmPassword" class="form-control"></InputText>
+                                <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                            </div>
+                            <ValidationMessage For="@(() => model.ConfirmPassword)" />
+                        </div>
+                     
+                        <div class="mb-3">
+                            <button class="btn btn-primary d-grid w-100" type="submit">Register</button>
+                        </div>
+                    </EditForm>
+
+                    <p class="text-center">
+                        <span>Have Account ?</span>
+                        <a href="/account/login">
+                            <span>Login</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <!-- /Register -->
+        </div>
+    </div>
+</div>
+
+@code {
+
+    Register model = new Register();
+
+    async void RegisterAction()
+    {
+        var response = await httpClient.PostAsJsonAsync("api/account/register", new RegisterRequest(model.Email, model.Password, "Pemohon"));
+        if (response.IsSuccessStatusCode)
+        {
+            var contentString = await response.Content.ReadAsStringAsync();
+            AuthenticateResponse result = await response.GetResult<AuthenticateResponse>();
+            if (result != null)
+            {
+                await localService.SetItemAsync("token", result.Token);
+                await localService.SetItemAsync("userName", result.UserName);
+                await localService.SetItemAsync("email", result.Email);
+                await authStateProvider.GetAuthenticationStateAsync();
+                if (navManager.Uri.ToString().ToLower().Contains("/account/register"))
+                    navManager.NavigateTo("/");
+                else
+                    navManager.NavigateTo(navManager.Uri);
+            }
+        }
+
+    }
+
+    public class Register
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string ConfirmPassword { get; set; }
+    }
+
+   
+
+}

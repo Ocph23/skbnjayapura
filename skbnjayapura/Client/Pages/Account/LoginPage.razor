@@ -1,0 +1,108 @@
+﻿@layout AccountLayout
+@page "/account/login"
+@using System.Text.Json;
+@using FluentValidation;
+@using Morris.Blazor.FluentValidation;
+@using Morris.Blazor.Validation;
+
+@inject ILocalStorageService localService
+@inject AuthenticationStateProvider authStateProvider
+@inject IHttpClientFactory _clientFactory
+
+@inject NavigationManager navManager
+
+<div class="container-xxl">
+    <div class="authentication-wrapper authentication-basic container-p-y">
+        <div class="authentication-inner">
+            <!-- Register -->
+            <div class="card">
+                <div class="card-body">
+                    <!-- Logo -->
+                    <div style="display:flex; justify-content:center; align-items:center; flex-direction:column; width:100%">
+                        <a href="/">
+                            <img style="width:75px" src="/polri.png" />
+                        </a>
+                        <h6 class="mt-3 mb-0">SATUAN NARKOBA</h6>
+                        <h6 class="mt-1 mb-0">POLRES JAYAPURA</h6>
+                    </div>
+                    <!-- /Logo -->
+
+                    <h6 class="mt-4 mb-3">LOGIN</h6>
+                    <EditForm Model="@model" OnValidSubmit="LoginAction">
+                        <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<LoginValidator>()) />
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email or Username</label>
+                            <InputText type="text" @bind-Value="model.UserName" class="form-control"></InputText>
+                            <ValidationMessage For="@(() => model.UserName)" />
+
+                        </div>
+                        <div class="mb-3 form-password-toggle">
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label" for="password">Password</label>
+                            </div>
+                            <div class="input-group input-group-merge">
+                                <InputText type="password" @bind-Value="@model.Password" class="form-control"></InputText>
+                                <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                            </div>
+                            <ValidationMessage For="@(() => model.Password)" />
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember-me">
+                                <label class="form-check-label" for="remember-me"> Remember Me </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-primary d-grid w-100" type="submit">Sign in</button>
+                        </div>
+                    </EditForm>
+
+                    <p class="text-center">
+                        <span>Not Have Account ?</span>
+                        <a href="/account/register">
+                            <span>Register</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <!-- /Register -->
+        </div>
+    </div>
+</div>
+
+@code {
+
+    Login model = new Login();
+
+    async void LoginAction()
+    {
+        var httpClient = _clientFactory.CreateClient("All");
+        var response = await httpClient.PostAsJsonAsync("api/account/login", new LoginRequest(model.UserName, model.Password));
+        if (response.IsSuccessStatusCode)
+        {
+            var contentString = await response.Content.ReadAsStringAsync();
+            AuthenticateResponse result = await response.GetResult<AuthenticateResponse>();
+            if (result != null)
+            {
+                await localService.SetItemAsync("token", result.Token);
+                await localService.SetItemAsync("userName", result.UserName);
+                await localService.SetItemAsync("email", result.Email);
+                await authStateProvider.GetAuthenticationStateAsync();
+                if (navManager.Uri.ToString().ToLower().Contains("/account/login"))
+                    navManager.NavigateTo("/");
+                else
+                    navManager.NavigateTo(navManager.Uri);
+            }
+        }
+
+    }
+
+    public class Login
+    {
+        public string UserName { get; set; }
+        public string Password { get; set; }
+    }
+
+   
+
+}

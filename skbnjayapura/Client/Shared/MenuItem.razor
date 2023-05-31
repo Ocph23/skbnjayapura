@@ -1,0 +1,55 @@
+﻿<li class="menu-item @open">
+    <a @onclick="OpenSubMenu" href="javascript:void(0);" class="menu-link @toggle">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <i class="menu-icon @Icon bx bx-layout"></i>
+        }
+        <div data-i18n="Layouts">@Title</div>
+    </a>
+    <ul class="menu-sub">
+        @SubMenuItem
+    </ul>
+</li>
+
+@code {
+    string open;
+    string toggle = string.Empty;
+
+    [Parameter]
+    public RenderFragment SubMenuItem { get; set; }
+
+    [Parameter]
+    public string Title { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+
+    [Parameter]
+    public string Path { get; set; }
+
+    [Parameter]
+    public string Icon { get; set; }
+
+
+    protected override Task OnInitializedAsync()
+    {
+        if (SubMenuItem != null)
+            toggle = "menu-toggle";
+
+
+            return Task.CompletedTask;
+    }
+
+    async Task OpenSubMenu()
+    {
+        if (SubMenuItem == null)
+            NavigationManager.NavigateTo(Path);
+        else
+        {
+            open = string.IsNullOrEmpty(open) ? "open" : "";
+        }
+    }
+
+
+}

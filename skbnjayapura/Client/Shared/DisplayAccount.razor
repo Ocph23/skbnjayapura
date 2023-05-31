@@ -1,0 +1,40 @@
+﻿@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navManager
+@inject ILocalStorageService localStorageService
+@inject AuthenticationStateProvider authStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <li class="nav-item lh-1 me-3">
+            <p>Hello, @context.User.Identity.Name!</p>
+        </li>
+        <li class="nav-item lh-1 me-3">
+            <p><button @onclick="Logout">Logout</button></p>
+        </li>
+    </Authorized>
+    <NotAuthorized>
+        <p><button @onclick="@(()=> navManager.NavigateTo("/account/login"))">Login</button></p>
+    </NotAuthorized>
+</AuthorizeView>
+@code {
+    string userName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var provider = await authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = provider.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            userName = user.Identity.Name;
+        }
+    }
+
+   async Task Logout()
+    {
+        await localStorageService.RemoveItemAsync("token");
+        await localStorageService.RemoveItemAsync("userName");
+        await localStorageService.RemoveItemAsync("email");
+        await authStateProvider.GetAuthenticationStateAsync();
+        navManager.NavigateTo("/account/login"); 
+    }
+}

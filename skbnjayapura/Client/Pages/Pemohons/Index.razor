@@ -1,0 +1,34 @@
+﻿@layout AdminLayout
+@page "/pemohon"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager nav
+
+<PageTitle>Index</PageTitle>
+
+<div class="m-4">
+    <h1>Pemohon!</h1>
+    Welcome to your new app.
+    <SurveyPrompt Title="How is Blazor working for you?" />
+</div>
+
+
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            if (user.IsInRole("Admin"))
+                nav.NavigateTo("admin");
+            if (user.IsInRole("Pemohon"))
+                nav.NavigateTo("pemohon");
+        }
+    }
+
+
+}

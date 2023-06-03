@@ -1,0 +1,181 @@
+﻿@layout PemohonLayout
+@page "/pemohon/permohonan"
+
+@attribute [Authorize(Roles = "Pemohon")]
+
+@inject NavigationManager navManager
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card">
+        <div style=" display:flex;justify-content:space-between; align-items:center">
+            <h5 class="card-header">Data Permohonan</h5>
+            <div>
+                <button @onclick="@(()=>navManager.NavigateTo("/pemohon/permohonan/0"))"
+                    style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" >
+                    <i class="bx bx-plus-circle mb-2" style="font-size:30px"></i>
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nomor</th>
+                        <th>Keperluan</th>
+                        <th>Catatan</th>
+                        <th>Status</th>
+                        <th>Tanggal Pengajuan</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+
+                    @if (persyaratans != null)
+                    {
+                        @foreach (var item in persyaratans.Select((data,index)=> new {data,index}))
+                            {
+                            <tr>
+                                <td>@(item.index+1)</td>
+                                <td>@item.data.Nomor</td>
+                                <td>@item.data.Keperluan</td>
+                                <td>@item.data.Catatan</td>
+                                <td> <span class="badge rounded-pill bg-warning">@item.data.Status</span></td>
+                                <td>@item.data.TanggalPengajuan.Value.ToString("dd-MM-yyyy")</td>
+                                <td>
+                                    <div class="dropdown" style="position:inherit !important">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                                            <a class="dropdown-item" @onclick="@(()=>DeleteAction(item.data))"><i class="bx bx-trash me-1"></i> Delete</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<ConfirmDialog @ref="confirmDialog" />
+
+@inject HttpClient httpClient
+@inject ILocalStorageService localService
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; }
+    ICollection<Permohonan> persyaratans;
+    Permohonan model = new Permohonan();
+    private ConfirmDialog confirmDialog;
+
+    //  List<ToastMessage> messages = new List<ToastMessage>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await httpClient.SetToken(localService);
+        var response = await httpClient.GetAsync("api/permohonan/byuser");
+
+        if (response.IsSuccessStatusCode)
+        {
+            persyaratans = (await response.GetResult<IEnumerable<Permohonan>>()).ToList();
+        }
+    }
+
+    void EditAction(Permohonan data)
+    {
+        navManager.NavigateTo($"/pemohon/permohonan/{data.Id}");
+    }
+
+    async Task SaveAction()
+    {
+        try
+        {
+            if (model.Id <= 0)
+            {
+                var httpResponse = await httpClient.PostAsJsonAsync<Permohonan>("api/persyaratan", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Permohonan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil disimpan !");
+                    persyaratans.Add(result);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    return;
+                }
+
+                throw new SystemException(await httpResponse.Error());
+
+            }
+            else
+            {
+                var httpResponse = await httpClient.PutAsJsonAsync<Permohonan>($"api/persyaratan/{model.Id}", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Permohonan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil diubah !");
+
+                    var data = persyaratans.SingleOrDefault(x => x.Id == model.Id);
+                    if (data != null)
+                    {
+                        data.Id = result.Id;
+                        data.Keperluan = result.Keperluan;
+                        data.Catatan = result.Catatan;
+                        data.TanggalPengajuan = result.TanggalPengajuan;
+                        data.Profile = result.Profile;
+                    }
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    return;
+                }
+
+                throw new SystemException(await httpResponse.Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    async Task DeleteAction(Permohonan value)
+    {
+        try
+        {
+            var options = new ConfirmDialogOptions
+                {
+                    YesButtonText = "OK",
+                    YesButtonColor = ButtonColor.Success,
+                    NoButtonText = "CANCEL",
+                    NoButtonColor = ButtonColor.Danger
+                };
+            var confirmation = await confirmDialog.ShowAsync(
+                title: "Delete",
+                message1: "Hapus Permohonan ??",
+                confirmDialogOptions: options);
+            if (confirmation)
+            {
+                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/permohonan/{value.Id}");
+                if (deleted)
+                {
+
+                    var data = persyaratans.SingleOrDefault(x => x.Id == value.Id);
+                    persyaratans.Remove(data);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil Hapus Data !"));
+                    await InvokeAsync(() => StateHasChanged());
+                    return;
+                }
+                throw new SystemException("Data tidak berhasil dihapus !");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+}

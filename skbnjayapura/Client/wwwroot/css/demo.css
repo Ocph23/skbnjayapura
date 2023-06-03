@@ -3,6 +3,43 @@
 * File include item demo only specific css only
 ******************************************************************************/
 
+.justprint {
+    display: none;
+}
+
+@media print {
+    body{
+        background-color:transparent !important;
+    }
+
+    footer, nav, layout-navbar, aside, header, .rz-header, .rz-sidebar, .rz-footer {
+        display: none !important;
+    }
+
+    .noprint {
+        display: none !important;
+    }
+
+    .justprint {
+        display: block !important;
+    }
+
+    table, td, th {
+        border: 1px solid;
+        padding: 2px;
+        font-size: 12px
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+}
+
+aside {
+    background-image: linear-gradient(to right top, #590000, #600204, #83191d, #6f090c, #770d0f, #790f10, #7c1112, #b71414, #7c1313, #9b1a1a, #781414, #761414);
+}
+
 .menu .app-brand.demo {
   height: 64px;
   margin-top: 12px;

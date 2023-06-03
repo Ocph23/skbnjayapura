@@ -1,0 +1,109 @@
+﻿@page "/persyaratan"
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager nav
+
+<PageTitle>Index</PageTitle>
+
+<div style="margin:30px">
+    <img style="width:100px; margin:10px" src="/polri.png" />
+    <h1 style="margin:5px">PERSYARATAN</h1>
+    <h4 style="margin:5px">SURAT KETERANGAN BEBAS NARKOBA (SKBN)</h4>
+
+    <ul class="ull">
+        <li class="cli">1 Lembar Foto Copy Surat Keterangan Pemeriksaan narkoba (SKPN)</li>
+        <li class="cli">1 Lembar Foto Copy Kartu Tanda Penduduk (KTP)</li>
+        <li class="cli">2 Lembar Pas Photo 4x6 berwarna</li>
+    </ul>
+
+    <div style="margin: 75px 0px 0px 150px">
+        <h1 style="margin:5px">JAM PELAYANAN SKBN</h1>
+        <ul class="ull">
+            <li class="cli">
+                <div style="display:flex; width:100%">
+                    <label style="width:150px">Senin - Kamis</label>
+                    <label style="width:15px">:</label>
+                    <div style="display:flex; flex-direction:column">
+                        <label>09.00 WIT s/d 12 WIT</label>
+                        <label>13.00 WIT s/d 15 WIT</label>
+                    </div>
+                </div>
+            </li>
+            <li class="cli">
+                <div style="display:flex; width:100%">
+                    <label style="width:150px">Jumat</label>
+                    <label style="width:15px">:</label>
+                    <div style="display:flex; flex-direction:column">
+                        <label>09.00 WIT s/d 11 WIT</label>
+                        <label>13.00 WIT s/d 15 WIT</label>
+                    </div>
+                </div>
+            </li>
+            <li class="cli">
+                <div style="display:flex; width:100%">
+                    <label style="width:150px">Senin - Kamis</label>
+                    <label style="width:15px">:</label>
+                    <div style="display:flex; flex-direction:column">
+                        <label>10.00 WIT s/d 13 WIT</label>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <img style="width:30%; opacity:1; position:absolute; right:10px; bottom:10px" src="/logosatnarkoba.png" />
+</div>
+
+<style>
+    .cli::marker {
+        content: "»";
+        font-size: 3em;
+        --hue: 0;
+        color: hsl(var(--hue) 50% 50%);
+    }
+
+    .ul .cli {
+        padding-inline-start: 1ch;
+    }
+
+    .cli:nth-child(2)::marker {
+        --hue: 50;
+        font-size: 2.5em;
+    }
+
+    .cli:nth-child(3)::marker {
+        --hue: 100;
+        font-size: 2.5em;
+    }
+
+    .cli:nth-child(4)::marker {
+        --hue: 200;
+        font-size: 2.5em;
+    }
+
+    .cli:nth-child(5)::marker {
+        --hue: 250;
+        font-size: 2.5em;
+    }
+
+   
+
+</style>
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            if (user.IsInRole("Admin"))
+                nav.NavigateTo("admin");
+            if (user.IsInRole("Pemohon"))
+                nav.NavigateTo("pemohon");
+        }
+    }
+
+
+}

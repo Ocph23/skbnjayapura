@@ -74,6 +74,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         }
         catch (Exception ex)
         {
+            NotifyAuthenticationStateChanged(Task.FromResult(state));
             return state;
         }
     }

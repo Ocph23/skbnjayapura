@@ -6,16 +6,31 @@
 <AuthorizeView>
     <Authorized>
         <li class="nav-item lh-1 me-3">
-            <p>Hello, @context.User.Identity.Name!</p>
+            <a>Hello, @context.User.Identity.Name!</a>
         </li>
         <li class="nav-item lh-1 me-3">
-            <p><button @onclick="Logout">Logout</button></p>
+            <a href="" @onclick="Logout">Logout</a>
         </li>
     </Authorized>
     <NotAuthorized>
-        <p><button @onclick="@(()=> navManager.NavigateTo("/account/login"))">Login</button></p>
+        <li class="nav-item lh-1 me-3">
+            <a href="/account/login">Login</a>
+        </li>
     </NotAuthorized>
 </AuthorizeView>
+
+<style>
+
+    a, p {
+        color: maroon
+    }
+
+        a:visited {
+            color: #e30b0b;
+        }
+</style>
+
+
 @code {
     string userName = string.Empty;
 
@@ -29,12 +44,13 @@
         }
     }
 
-   async Task Logout()
+    async Task Logout()
     {
         await localStorageService.RemoveItemAsync("token");
         await localStorageService.RemoveItemAsync("userName");
         await localStorageService.RemoveItemAsync("email");
-        await authStateProvider.GetAuthenticationStateAsync();
-        navManager.NavigateTo("/account/login"); 
+        var result =  await authStateProvider.GetAuthenticationStateAsync();
+        navManager.NavigateTo("/");
+        StateHasChanged();
     }
 }

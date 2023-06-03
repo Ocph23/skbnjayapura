@@ -1,0 +1,201 @@
+﻿@layout PemohonLayout
+@page "/pemohon/profile"
+
+@inject HttpClient httpClient
+@inject ToastService ToastService;
+@inject ILocalStorageService localStorage;
+
+
+<PageTitle>Profile</PageTitle>
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmitAction">
+        <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<ProfileValidator>()) />
+        <div class="card mb-4">
+            <div style="display:flex;justify-content:space-between">
+                <h5 class="card-header">Profile</h5>
+                <button style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" type="submit">
+                    <i class="bx @saveIcon mb-2" style="font-size:30px"></i>
+                </button>
+            </div>
+            @if (string.IsNullOrEmpty(model.Photo))
+            {
+                <div style="display:flex;justify-content:center">
+                    <img src="/files/@model.Photo" alt="" class="w-px-100 h-px-150 rounded-circle">
+                </div>
+            }
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Nama</label>
+                    <InputText type="text" @bind-Value="model.Nama" class="form-control"></InputText>
+                    <ValidationMessage For="@(() => model.Nama)" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">NIK</label>
+                    <InputText type="text" @bind-Value="model.NomorNIK" class="form-control"></InputText>
+                    <ValidationMessage For="@(() => model.NomorNIK)" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Jenis Kelamin</label>
+                    <InputSelect class="form-control"
+                                 @bind-Value="@model.JenisKelamin">
+                        <option value="">Pilih Jenis Kelamin</option>
+                        @foreach (var jk in Helper.GetGender())
+                        {
+                            <option value="@jk">@jk</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.JenisKelamin)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Kewarga Negaraan</label>
+                    <InputSelect class="form-control" @bind-Value="@model.Kebangsaan">
+                        <option value="">Pilih Kebangsaan</option>
+                        @foreach (var item in Helper.GetKebangsaan())
+                        {
+                            <option value="@item">@item</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.Kebangsaan)" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Agama</label>
+                    <InputSelect class="form-control" @bind-Value="@model.Agama">
+                        <option value="">Pilih Agama</option>
+                        @foreach (var item in Helper.GetAgama())
+                        {
+                            <option value="@item">@item</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => model.Agama)" />
+                </div>
+
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label class="form-label">Tempat Lahir</label>
+                            <InputText type="text" @bind-Value="model.TempatLahir" class="form-control"></InputText>
+                            <ValidationMessage For="@(() => model.TempatLahir)" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tempat Lahir</label>
+                            <InputDate Type="InputDateType.Date" @bind-Value="model.TanggalLahir" class="form-control"></InputDate>
+                            <ValidationMessage For="@(() => model.TanggalLahir)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Pekerjaan</label>
+                    <InputText type="text" @bind-Value="model.Pekerjaan" class="form-control"></InputText>
+                    <ValidationMessage For="@(() => model.Pekerjaan)" />
+                </div>
+                <div>
+                    <label class="form-label">Nomor HP</label>
+                    <InputText type="text" @bind-Value="model.NomorHP" class="form-control"></InputText>
+                    <ValidationMessage For="@(() => model.NomorHP)" />
+                </div>
+                <div>
+                    <label class="form-label">Alamat</label>
+                    <InputTextArea type="text" @bind-Value="model.Alamat" class="form-control"></InputTextArea>
+                    <ValidationMessage For="@(() => model.Alamat)" />
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+
+@code {
+    string saveIcon = "bx-check-circle";
+    Profile model = new Profile();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await httpClient.SetToken(localStorage);
+        try
+        {
+            var response = await httpClient.GetAsync("api/account/profile");
+            if (response.IsSuccessStatusCode)
+                model = await response.GetResult<Profile>();
+            else
+                throw new SystemException("Silahkan Lengkapi Data Profile Anda !");
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+
+    }
+
+
+    async Task OnValidSubmitAction()
+    {
+        saveIcon = "bx bx-loader bx-spin";
+        try
+        {
+            if (model.Id <= 0)
+            {
+                var httpResponse = await httpClient.PostAsJsonAsync<Profile>("api/account/profile", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Profile>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil disimpan !");
+
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await Task.Delay(500);
+                    saveIcon = "bxs-check-circle saveAnimation";
+                    StateHasChanged();
+                    return;
+                }
+
+                throw new SystemException(await httpResponse.Error());
+
+            }
+            else
+            {
+                var httpResponse = await httpClient.PutAsJsonAsync<Profile>($"api/account/profile/{model.Id}", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Profile>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil diubah !");
+
+                    if (result != null)
+                    {
+                        model.Id = result.Id;
+                        model.Nama = result.Nama;
+                        model.JenisKelamin = result.JenisKelamin;
+                        model.Kebangsaan = result.Kebangsaan;
+                        model.Agama = result.Agama;
+                        model.TempatLahir = result.TempatLahir;
+                        model.TanggalLahir = result.TanggalLahir;
+                        model.Pekerjaan = result.Pekerjaan;
+                        model.NomorHP = result.NomorHP;
+                        model.Alamat = result.Alamat;
+                    }
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await Task.Delay(500);
+                    saveIcon = "bxs-check-circle saveAnimation";
+                    StateHasChanged();
+                    return;
+                }
+
+                throw new SystemException(await httpResponse.Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            saveIcon = "bxs-error-alt errorAnimation";
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+            StateHasChanged();
+        }
+        finally
+        {
+            await Task.Delay(1000);
+            saveIcon = "bx-check-circle";
+            StateHasChanged();
+        }
+    }
+}

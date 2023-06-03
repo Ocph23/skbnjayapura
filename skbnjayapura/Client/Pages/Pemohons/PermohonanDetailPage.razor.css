@@ -1,0 +1,40 @@
+﻿.saveAnimation{
+    animation-name:changeColor;
+    animation-duration:2s;
+}
+
+
+.errorAnimation {
+    animation-name: changeErrorColor;
+    animation-duration: 2s;
+}
+
+
+@keyframes changeColor {
+    0% {
+        color: #697a8d;
+    }
+
+    50% {
+        color: lime;
+    }
+
+    100% {
+        color: #697a8d;
+    }
+}
+
+
+@keyframes changeErrorColor {
+    0% {
+        color: #697a8d;
+    }
+
+    50% {
+        color: darkred;
+    }
+
+    100% {
+        color: #697a8d;
+    }
+}

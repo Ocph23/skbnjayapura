@@ -75,6 +75,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPersyaratanService, PersyaratanService>();
+builder.Services.AddScoped<IPermohonanService, PermohonanService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 
 var app = builder.Build();
 
@@ -89,7 +91,7 @@ using (var scope = app.Services.CreateScope())
     if (!dbContext.Roles.Any())
     {
         dbContext.Roles.Add(new IdentityRole { Name = "Admin", NormalizedName = "ADMIN" });
-        dbContext.Roles.Add(new IdentityRole { Name = "Pemohon", NormalizedName = "Pemohon" });
+        dbContext.Roles.Add(new IdentityRole { Name = "Pemohon", NormalizedName = "PEMOHON" });
         dbContext.SaveChanges();
     }
 

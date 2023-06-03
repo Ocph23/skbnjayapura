@@ -1,0 +1,76 @@
+﻿﻿<div style="display:flex; border:none">
+    @if (CanUpload)
+    {
+        <InputFile @ref="inputFile" id="@id" OnChange="UploadFiles" hidden multiple accept="image/jpg,image/jpeg,image/png,application/pdf" />
+        <label for="@id">
+            <i style="font-size:25px" for="@id" class="bx bx-upload me-1"></i>
+        </label>
+    }
+    @if (!string.IsNullOrEmpty(FileName))
+    {
+        <a href="@($"/files/{FileName}")" target="_blank"> <i style="font-size:25px" class="bx @GetIcons() me-1"></i></a>
+    }
+</div>
+
+@inject HttpClient httpClient
+@inject ToastService ToastService;
+@inject ILocalStorageService localStorage;
+
+@code {
+
+    [Parameter]
+    public int DataId { get; set; }
+
+    [Parameter]
+    public string FileName { get; set; }
+
+    [Parameter]
+    public bool CanUpload { get; set; }
+
+
+    [Parameter]
+    public EventCallback<string> OnUpload { get; set; }
+
+    InputFile? inputFile;
+    string id = Guid.NewGuid().ToString();
+
+    int maxFile = 1024 * (2 * 1024);
+    string GetIcons()
+    {
+        if (!string.IsNullOrEmpty(FileName))
+        {
+            var extention = FileName.Split(".").Last().ToLower();
+
+            if (extention.Contains("pdf"))
+                return "bxs-file-pdf";
+
+            if (extention.Contains("jpg") || extention.Contains("jpeg") || extention.Contains("png"))
+                return "bxs-file-image";
+
+        }
+        return "bxs-file-image";
+    }
+
+    private async Task UploadFiles(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            await httpClient.SetToken(localStorage);
+            var content = new MultipartFormDataContent();
+            content.Add(new StreamContent(e.File.OpenReadStream()), "file", e.File.Name);
+            var response = await httpClient.PostAsync($"api/Permohonan/upload/{DataId}", content);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                FileName = result;
+            }
+            ToastService.Notify(new ToastMessage(ToastType.Info, "Success", "Berhasil !"));
+            await OnUpload.InvokeAsync(FileName);
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+}

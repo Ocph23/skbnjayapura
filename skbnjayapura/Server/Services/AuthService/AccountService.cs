@@ -12,13 +12,16 @@ public class AccountService : IAccountService
     private readonly AppSettings _appSettings;
     private readonly UserManager<IdentityUser> userManager;
     private readonly SignInManager<IdentityUser> signInManager;
+    private readonly ApplicationDbContext dbcontext;
+
     public AccountService(IOptions<AppSettings> appSettings, 
         UserManager<IdentityUser>
-        _userManager, SignInManager<IdentityUser> _signInManager)
+        _userManager, SignInManager<IdentityUser> _signInManager, ApplicationDbContext _dbcontext)
     {
         _appSettings = appSettings.Value;
         userManager = _userManager;
         signInManager = _signInManager;
+        dbcontext = _dbcontext;
     }
 
     public async Task<AuthenticateResponse> Login(LoginRequest model)
@@ -83,17 +86,66 @@ public class AccountService : IAccountService
         throw new NotImplementedException();
     }
 
-    public Task<IdentityUser> FindUserByUserName(string userName)
+    public async Task<IdentityUser> FindUserByUserName(string userName) => await userManager.FindByNameAsync(userName);
+
+    public Task<IEnumerable<IdentityUser>> GetUsers()
     {
         throw new NotImplementedException();
+    }
+
+    public Task<Profile> GetProfile(string userId)
+    {
+        try
+        {
+            var value =dbcontext.Profiles.SingleOrDefault(x=>x.UserId == userId);
+            return Task.FromResult(value);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public Task<Profile> PostProfile(Profile value)
+    {
+        try
+        {
+            dbcontext.Profiles.Add(value);
+            dbcontext.SaveChanges();
+            return Task.FromResult(value);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public Task<Profile> PutProfile(int id, Profile value)
+    {
+        try
+        {
+            var data = dbcontext.Profiles.SingleOrDefault(x=>x.Id==id);
+            ArgumentNullException.ThrowIfNull(data);
+            data.Nama = value.Nama;
+            data.JenisKelamin = value.JenisKelamin;
+            data.Kebangsaan = value.Kebangsaan;
+            data.Agama = value.Agama;
+            data.TempatLahir = value.TempatLahir;
+            data.TanggalLahir = value.TanggalLahir;
+            data.Pekerjaan = value.Pekerjaan;
+            data.NomorHP = value.NomorHP;
+            data.Alamat = value.Alamat;
+
+            dbcontext.SaveChanges();
+            return Task.FromResult(data);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
     }
 
     public Task<IdentityUser> FindUserByEmail(string email)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<IdentityUser>> GetUsers()
     {
         throw new NotImplementedException();
     }

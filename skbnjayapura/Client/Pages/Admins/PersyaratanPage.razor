@@ -2,7 +2,7 @@
 @page "/admin/persyaratan"
 
 @attribute [Authorize(Roles = "Admin")]
-<div class="m-4">
+<div class="container-xxl flex-grow-1 container-p-y">
     <div class="card">
         <div style=" display:flex;justify-content:space-between; align-items:center">
             <h5 class="card-header">Data Persyaratan</h5>
@@ -73,7 +73,7 @@
             <div class="mb-3">
                 <div class="form-check">
                     <InputCheckbox @bind-Value="model.IsPhoto"></InputCheckbox>
-                    <label class="form-check-label"> Photo </label>
+                    <label class="form-check-label"> Jika Photo , Gunakan Sebagai Foto Profile </label>
                 </div>
             </div>
 

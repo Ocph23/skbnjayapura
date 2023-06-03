@@ -224,22 +224,25 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("FileName")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("PermohoanId")
+                    b.Property<int?>("PermohonanId")
                         .HasColumnType("int");
 
                     b.Property<int>("PersyaratanId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Verifikasi")
+                        .HasColumnType("tinyint(1)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("PermohoanId");
+                    b.HasIndex("PermohonanId");
 
                     b.HasIndex("PersyaratanId");
 
                     b.ToTable("ItemPersyaratan");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -257,6 +260,9 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<int?>("SkbnId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("TanggalPengajuan")
                         .HasColumnType("datetime(6)");
 
@@ -266,7 +272,7 @@ namespace skbnjayapura.Server.Migrations
 
                     b.HasIndex("SkbnId");
 
-                    b.ToTable("Permohoans");
+                    b.ToTable("Permohonans");
                 });
 
             modelBuilder.Entity("skbnjayapura.Shared.Persyaratan", b =>
@@ -303,11 +309,13 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("Agama")
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("Aktif")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Alamat")
                         .HasColumnType("longtext");
 
                     b.Property<string>("JenisKelamin")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Kebangsaan")
@@ -319,13 +327,16 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("NomorHP")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("NomorNIK")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Pekerjaan")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Photo")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("TanggalLahir")
+                    b.Property<DateTime>("TanggalLahir")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("TempatLahir")
@@ -354,7 +365,13 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("Nomor")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("NomorSKPN")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("TanggalPersetujuan")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("TanggalSKPN")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -418,9 +435,9 @@ namespace skbnjayapura.Server.Migrations
 
             modelBuilder.Entity("skbnjayapura.Shared.ItemPersyaratan", b =>
                 {
-                    b.HasOne("skbnjayapura.Shared.Permohoan", null)
+                    b.HasOne("skbnjayapura.Shared.Permohonan", null)
                         .WithMany("ItemPersyaratan")
-                        .HasForeignKey("PermohoanId");
+                        .HasForeignKey("PermohonanId");
 
                     b.HasOne("skbnjayapura.Shared.Persyaratan", "Persyaratan")
                         .WithMany()
@@ -431,7 +448,7 @@ namespace skbnjayapura.Server.Migrations
                     b.Navigation("Persyaratan");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.HasOne("skbnjayapura.Shared.Profile", "Profile")
                         .WithMany()
@@ -446,7 +463,7 @@ namespace skbnjayapura.Server.Migrations
                     b.Navigation("Skbn");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.Navigation("ItemPersyaratan");
                 });

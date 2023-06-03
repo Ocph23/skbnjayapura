@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace skbnjayapura.Shared
 {
-    public class Permohoan
+    public class Permohonan
     {
         public int Id { get; set; }
         public Profile? Profile { get; set; }
@@ -16,5 +16,8 @@ namespace skbnjayapura.Shared
         public ICollection<ItemPersyaratan> ItemPersyaratan { get; set; } = new List<ItemPersyaratan>();
         public string? Catatan { get; set; }
         public string? Nomor => $"P-SKBN{Id.ToString("D5")}"; 
+
+        public StatusPermohonan Status { get; set; }
+
     }
 }

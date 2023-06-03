@@ -1,0 +1,267 @@
+﻿@layout PemohonLayout
+@page "/pemohon/permohonan/{id:int}"
+@using System.Net.Http.Headers;
+@using System.Net;
+
+@inject HttpClient httpClient
+@inject ToastService ToastService;
+@inject ILocalStorageService localStorage;
+@inject NavigationManager navManager
+
+
+<PageTitle>@title</PageTitle>
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmitAction">
+        <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<PermohonanValidator>()) />
+        <div class="card mb-4">
+            <div style="display:flex;justify-content:space-between">
+                <h5 class="card-header">@title  <span class="badge rounded-pill bg-warning">@model.Status</span></h5>
+                @if(model.Status== StatusPermohonan.Baru)
+                {
+                    <button style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" type="submit">
+                        <i class="bx @saveIcon mb-2" style="font-size:30px"></i>
+                    </button>
+                }
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Nomor</label>
+                    <input type="text" readonly Value="@model.Nomor" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Keperluan</label>
+                    <InputTextArea type="text" @bind-Value="model.Keperluan" class="form-control"></InputTextArea>
+                    <ValidationMessage For="@(() => model.Keperluan)" />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Catatan</label>
+                    <InputTextArea type="text" @bind-Value="model.Catatan" class="form-control"></InputTextArea>
+                    <ValidationMessage For="@(() => model.Keperluan)" />
+                </div>
+
+                <div class="md-3">
+                    <label class="form-label">Tanggal</label>
+                    <InputDate Type="InputDateType.Date" @bind-Value="model.TanggalPengajuan" class="form-control"></InputDate>
+                    <ValidationMessage For="@(() => model.TanggalPengajuan)" />
+                </div>
+            </div>
+        </div>
+    </EditForm>
+
+    @if (Id > 0)
+    {
+        <div class="card">
+            <div style="display:flex;justify-content:space-between">
+                <h5 class="card-header">Data Persyaratan</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width:20px">No</th>
+                                <th>Nama Persyaratan</th>
+                                <th style="width:20px">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+
+                            @if (model.ItemPersyaratan != null)
+                            {
+                                @foreach (var item in model.ItemPersyaratan.Select((data, index) => new { data, index }))
+                                {
+                                    <tr>
+                                        <td>@(item.index + 1)</td>
+                                        <td>@item.data.Persyaratan.Nama</td>
+                                        <td>
+                                            <FileView CanUpload="true" FileName="@item.data.FileName" DataId="@item.data.Id"></FileView>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    string title = "Permohonan Baru";
+    string saveIcon = "bx-check-circle";
+    Permohonan model = new Permohonan();
+    Profile profile;
+    private long _uploaded = 0;
+    private double _percentage = 0;
+
+
+    void OnUploadResult(string fileName, ItemPersyaratan persyaratan)
+    {
+        persyaratan.FileName = fileName;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await httpClient.SetToken(localStorage);
+        try
+        {
+            await httpClient.SetToken(localStorage);
+            var response = await httpClient.GetAsync("api/account/profile");
+            if (response.IsSuccessStatusCode)
+                profile = await response.GetResult<Profile>();
+            else
+                throw new SystemException("Profile Tidak Ditemukan, Silahkan Lengkapi Data Profile Anda !");
+            if (Id > 0)
+            {
+                title = "Detail Permohonan";
+                var response2 = await httpClient.GetAsync($"api/permohonan/{Id}");
+                if (response2.IsSuccessStatusCode)
+                    model = await response2.GetResult<Permohonan>();
+                else
+                    throw new SystemException("Silahkan Lengkapi Data Permohonan Anda !");
+            }
+            else
+            {
+                model = new Permohonan() { Profile = profile };
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+
+    async Task OnValidSubmitAction()
+    {
+        saveIcon = "bx bx-loader bx-spin";
+        try
+        {
+            if (model.Id <= 0)
+            {
+                var httpResponse = await httpClient.PostAsJsonAsync<Permohonan>("api/permohonan", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Permohonan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil disimpan !");
+
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await Task.Delay(500);
+                    saveIcon = "bxs-check-circle saveAnimation";
+                    navManager.NavigateTo($"/pemohon/permohonan/{result.Id}");
+                    return;
+                }
+                throw new SystemException(await httpResponse.Error());
+            }
+            else
+            {
+                var httpResponse = await httpClient.PutAsJsonAsync<Permohonan>($"api/permohonan/{model.Id}", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Permohonan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil diubah !");
+
+                    if (result != null)
+                    {
+                        model.Id = result.Id;
+                        model.Keperluan = result.Keperluan;
+                    }
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await Task.Delay(500);
+                    saveIcon = "bxs-check-circle saveAnimation";
+                    StateHasChanged();
+                    return;
+                }
+
+                throw new SystemException(await httpResponse.Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            saveIcon = "bxs-error-alt errorAnimation";
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+            StateHasChanged();
+        }
+        finally
+        {
+            await Task.Delay(1000);
+            saveIcon = "bx-check-circle";
+            StateHasChanged();
+        }
+    }
+
+
+
+    public class ProgressiveStreamContent : StreamContent
+    {
+        // Define the variables which is the stream that represents the file
+        private readonly Stream _fileStream;
+        // Maximum amount of bytes to send per packet
+        private readonly int _maxBuffer = 1024 * 4;
+
+        public ProgressiveStreamContent(Stream stream, int maxBuffer, Action<long, double> onProgress) : base(stream)
+        {
+            _fileStream = stream;
+            _maxBuffer = maxBuffer;
+            OnProgress += onProgress;
+        }
+
+        /// <summary>
+        /// Event that we can subscribe to which will be triggered everytime after part of the file gets uploaded.
+        /// It passes the total amount of uploaded bytes and the percentage as well
+        /// </summary>
+        public event Action<long, double> OnProgress;
+
+        // Override the SerialzeToStreamAsync method which provides us with the stream that we can write our chunks into it
+        protected async override Task SerializeToStreamAsync(Stream stream, TransportContext context)
+        {
+            // Define an array of bytes with the the length of the maximum amount of bytes to be pushed per time
+            var buffer = new byte[_maxBuffer];
+            var totalLength = _fileStream.Length;
+            // Variable that holds the amount of uploaded bytes
+            long uploaded = 0;
+
+            double percentage = 0.0;
+
+            // Create an while loop that we will break it internally when all bytes uploaded to the server
+            while (true)
+            {
+                using (_fileStream)
+                {
+                    // In this part of code here in every loop we read a chunk of bytes and write them to the stream of the HttpContent
+                    var length = await _fileStream.ReadAsync(buffer, 0, _maxBuffer);
+                    // Check if the amount of bytes read recently, if there is no bytes read break the loop
+                    if (length <= 0)
+                    {
+                        break;
+                    }
+
+                    // Add the amount of read bytes to uploaded variable
+                    uploaded += length;
+                    // Calculate the percntage of the uploaded bytes out of the total remaining
+                    var perentage = Convert.ToDouble(uploaded * 100 / _fileStream.Length);
+
+                    // Write the bytes to the HttpContent stream
+                    await stream.WriteAsync(buffer);
+
+                    // Fire the event of OnProgress to notify the client about progress so far
+                    OnProgress?.Invoke(uploaded, percentage);
+
+                    // Add this delay over here just to simulate to notice the progress, because locally it's going to be so fast that you can barely notice it
+                    await Task.Delay(250);
+                }
+            }
+        }
+
+    }
+}

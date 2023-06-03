@@ -1,0 +1,253 @@
+﻿@layout AdminLayout
+@page "/admin/pemohon"
+
+@attribute [Authorize(Roles = "Admin")]
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card">
+        <div style=" display:flex;justify-content:space-between; align-items:center">
+            <h5 class="card-header">Data Pengguna</h5>
+        </div>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Pengguna</th>
+                        <th>Jenis Kelamin</th>
+                        <th>Kewarganegaraan</th>
+                        <th>Status Aktif</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+
+                    @if (profiles != null)
+                    {
+                        @foreach (var item in profiles.Select((data, index) => new { data, index }))
+                        {
+                            <tr>
+                                <td>@(item.index + 1)</td>
+                                <td>@item.data.Nama</td>
+                                <td>@item.data.JenisKelamin</td>
+                                <td>@item.data.Kebangsaan</td>
+                                <td><span class="badge bg-label-primary me-1">@(item.data.Aktif ? "Aktif" : "Tidak Aktif")</span></td>
+                                <td>
+                                    <div class="dropdown" style="position:inherit !important">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-detail me-1"></i> Detail</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        }
+                    }
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modal" Title="PROFIL PENGGUNA" Size="ModalSize.Large" IsVerticallyCentered=true>
+    <BodyTemplate>
+        <EditForm Model="@model" OnValidSubmit="SaveAction">
+            <div class="row d-flex justify-content-center" >
+                <img style="margin:20px; width:140px;height:150px; border-radius:50%" src=@($"/files/{model.Photo}") />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Profile</label>
+                        <InputText readonly type="text" @bind-Value="model.Nama" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">NIK</label>
+                        <InputText readonly type="text" ValueExpression="@(() => model.NomorNIK)" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Kelamin</label>
+                        <InputText readonly type="text" @bind-Value="model.JenisKelamin" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kewarganegaraan</label>
+                        <InputText readonly type="text" @bind-Value="model.Kebangsaan" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Agama</label>
+                        <InputText readonly type="text" @bind-Value="model.Agama" class="form-control"></InputText>
+                    </div>
+
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Tempat, Tanggal Lahir</label>
+                        <input readonly type="text" value="@($"{model.TempatLahir}, {model.TanggalLahir.ToString("dd-MM-yyyy")}")"
+                               class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pekerjaan</label>
+                        <InputText readonly type="text" @bind-Value="@model.Pekerjaan" class="form-control"></InputText>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nomor HP</label>
+                        <InputText readonly type="text" @bind-Value="@model.NomorHP" class="form-control"></InputText>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Alamat</label>
+                        <InputTextArea readonly type="text" @bind-Value="@model.Alamat" class="form-control"></InputTextArea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <label class="form-label">Status </label>
+                            <div>
+                                <InputCheckbox @bind-Value="model.Aktif"></InputCheckbox>
+                                <label class="form-check-label"> Aktif </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
+                <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
+                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save </Button>
+            </div>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+<ConfirmDialog @ref="confirmDialog" />
+
+@inject HttpClient httpClient
+@inject ILocalStorageService localService
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; }
+    ICollection<Profile> profiles;
+    Profile model = new Profile();
+    private Modal modal;
+    private ConfirmDialog confirmDialog;
+
+    //  List<ToastMessage> messages = new List<ToastMessage>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await httpClient.SetToken(localService);
+        var response = await httpClient.GetAsync("api/profile");
+
+        if (response.IsSuccessStatusCode)
+        {
+            profiles = (await response.GetResult<IEnumerable<Profile>>()).ToList();
+        }
+    }
+
+    async Task EditAction(Profile data)
+    {
+        model = new Profile
+            {
+                Agama = data.Agama,
+                Nama = data.Nama,
+                Alamat = data.Alamat,
+                Id = data.Id,
+                JenisKelamin = data.JenisKelamin,
+                Kebangsaan = data.Kebangsaan,
+                NomorHP = data.NomorHP,
+                NomorNIK = data.NomorNIK,
+                Pekerjaan = data.Pekerjaan,
+                Photo = data.Photo,
+                TanggalLahir = data.TanggalLahir,
+                Aktif = data.Aktif,
+                TempatLahir = data.TempatLahir
+            };
+        await modal.ShowAsync();
+    }
+
+    async Task SaveAction()
+    {
+        try
+        {
+            var httpResponse = await httpClient.PutAsJsonAsync<Profile>($"api/profile/{model.Id}", model);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var result = await httpResponse.GetResult<Profile>();
+                if (result == null)
+                    throw new SystemException("Data tidak berhasil diubah !");
+
+                var data = profiles.SingleOrDefault(x => x.Id == model.Id);
+                if (data != null)
+                {
+                    data.Id = result.Id;
+                    data.Nama = result.Nama;
+                    data.Aktif = result.Aktif;
+                }
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                await modal.HideAsync();
+                return;
+            }
+
+            throw new SystemException(await httpResponse.Error());
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    async Task DeleteAction(Profile value)
+    {
+        try
+        {
+            var options = new ConfirmDialogOptions
+                {
+                    YesButtonText = "OK",
+                    YesButtonColor = ButtonColor.Success,
+                    NoButtonText = "CANCEL",
+                    NoButtonColor = ButtonColor.Danger
+                };
+            var confirmation = await confirmDialog.ShowAsync(
+                title: "Delete",
+                message1: "Hapus Profile ??",
+                confirmDialogOptions: options);
+            if (confirmation)
+            {
+                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/profile/{value.Id}");
+                if (deleted)
+                {
+
+                    var data = profiles.SingleOrDefault(x => x.Id == value.Id);
+                    profiles.Remove(data);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil Hapus Data !"));
+                    await modal.HideAsync();
+                    await InvokeAsync(() => StateHasChanged());
+                    return;
+                }
+                throw new SystemException("Data tidak berhasil dihapus !");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    private async Task OnShowModalClick()
+    {
+        model = new Profile() { Aktif = true };
+        await modal?.ShowAsync();
+    }
+    private async Task OnHideModalClick()
+    {
+        await modal?.HideAsync();
+    }
+
+
+
+}

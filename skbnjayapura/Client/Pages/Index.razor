@@ -4,14 +4,17 @@
 @inject NavigationManager nav
 
 <PageTitle>Index</PageTitle>
-<DisplayAccount/>
+<div class="container-xxl flex-grow-1 container-p-y" style="margin:30px">
+    <img style="width:150px; margin:30px" src="/polri.png" />
+    <h3>KEPOLISIAN REPUBLIK INDONESIA</h3>
+    <h3>DAERAH PAPUA</h3>
+    <h5>RESORT KOTA JAYAPURA KOTA</h5>
+    <h5>SAT RESERSE NARKOBA JAYAPURA KOTA</h5>
 
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+    Aplikasi Pembuatan Surat Keterangan Bebas Narkoba !
+    <SurveyPrompt Title="Rastra Sewakottama" />
+    <img style="width:30%; opacity:0.3; position:absolute; right:10px; bottom:10px" src="/logosatnarkoba.png" />
+</div>
 
 
 @code {
@@ -27,7 +30,7 @@ Welcome to your new app.
                 nav.NavigateTo("admin");
             if (user.IsInRole("Pemohon"))
                 nav.NavigateTo("pemohon");
-        }   
+        }
     }
 
 

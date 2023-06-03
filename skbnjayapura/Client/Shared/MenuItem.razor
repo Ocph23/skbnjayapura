@@ -2,9 +2,9 @@
     <a @onclick="OpenSubMenu" href="javascript:void(0);" class="menu-link @toggle">
         @if (!string.IsNullOrEmpty(Icon))
         {
-            <i class="menu-icon @Icon bx bx-layout"></i>
+            <i class="bx @Icon"></i>
         }
-        <div data-i18n="Layouts">@Title</div>
+        <div style="margin-left:5px" data-i18n="Layouts">@Title</div>
     </a>
     <ul class="menu-sub">
         @SubMenuItem

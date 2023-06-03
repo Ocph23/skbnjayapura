@@ -13,5 +13,8 @@ public interface IAccountService
     Task<IdentityUser> FindUserByUserName(string userName);
     Task<IdentityUser> FindUserByEmail(string email);
     Task<IEnumerable<IdentityUser>> GetUsers();
+    Task<Profile> GetProfile(string userId);
+    Task<Profile> PostProfile(Profile value);
+    Task<Profile> PutProfile(int id, Profile value);
 }
 

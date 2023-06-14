@@ -11,6 +11,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped(sp =>
     new HttpClient
     {
@@ -19,7 +20,6 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddAuthorizationCore();
-builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddFormValidation(config => config.AddFluentValidation(typeof(PersyaratanValidator).Assembly));
 builder.Services.AddBlazorBootstrap();
 await builder.Build().RunAsync();

@@ -93,10 +93,10 @@ public class PermohonanService : IPermohonanService
         var data = from a in dbContext.Permohonans
                 .Include(x => x.Profile)
                 .Include(x => x.Skbn).Where(x => x.Skbn != null)
-                   select new SKBNModel(a.Skbn.Nomor, a.Profile, a.Skbn.NomorSKPN, a.Skbn.TanggalSKPN.Value,
+                   select new SKBNModel(a.Skbn.Id, a.Skbn.Nomor, a.Profile, a.Skbn.NomorSKPN, a.Skbn.TanggalSKPN.Value,
                    a.Keperluan, a.Skbn.BerlakuMulai.Value,
                    a.Skbn.BerlakuSelesai.Value,
-                   a.Skbn.TanggalPersetujuan.Value);
+                   a.Skbn.TanggalPersetujuan.Value,a.Skbn.TangglPengambilan, a.Skbn.DiambilOleh);
         if(!data.Any())
             return Enumerable.Empty<SKBNModel>();
         return data.AsEnumerable();
@@ -120,6 +120,25 @@ public class PermohonanService : IPermohonanService
             dbContext.Permohonans.Add(model);
             dbContext.SaveChanges();
             return Task.FromResult(model);
+        }
+        catch (Exception ex)
+        {
+            throw new SystemException(ex.Message);
+        }
+    }
+
+    public Task<Pengambilan> PostPengambilan(Pengambilan value)
+    {
+        try
+        {
+            var oldData = dbContext.Permohonans
+                .Include(x => x.Skbn).Where(x => x.Skbn != null && x.Skbn.Id == value.Id).FirstOrDefault();
+
+            oldData.Status = StatusPermohonan.Diambil;
+            oldData.Skbn.DiambilOleh = value.Nama;
+            oldData.Skbn.TangglPengambilan = value.Tanggal;
+            dbContext.SaveChanges();
+            return Task.FromResult(value);
         }
         catch (Exception ex)
         {

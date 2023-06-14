@@ -13,10 +13,16 @@
         <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<ProfileValidator>()) />
         <div class="card mb-4">
             <div style="display:flex;justify-content:space-between">
-                <h5 class="card-header">Profile</h5>
-                <button style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" type="submit">
-                    <i class="bx @saveIcon mb-2" style="font-size:30px"></i>
-                </button>
+                <h5 class="card-header">Profile @if (!model.Aktif)
+                    {
+                        <span class="badge rounded-pill bg-danger">@(model.Aktif ? "" : "Tidak Aktif")</span>
+                    } </h5>
+                @if (model.Id<=0 || (model.Id>0 && model.Aktif))
+                {
+                    <button style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" type="submit">
+                        <i class="bx @saveIcon mb-2" style="font-size:30px"></i>
+                    </button>
+                }
             </div>
             @if (string.IsNullOrEmpty(model.Photo))
             {

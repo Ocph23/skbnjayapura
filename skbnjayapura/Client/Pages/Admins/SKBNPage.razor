@@ -7,6 +7,10 @@
     <div class="card">
         <div style=" display:flex;justify-content:space-between; align-items:center">
             <h5 class="card-header">Data SKBN</h5>
+            <div class="d-flex">
+                  <InputDate @bind-Value="startDate" onchange="@StartDateChange" class="form-control"></InputDate>
+                  <InputDate @bind-Value="endDate" class="form-control"></InputDate>
+            </div>
         </div>
         <div class="table-responsive text-nowrap">
             <table class="table table-hover">
@@ -18,6 +22,7 @@
                         <th>Keperluan</th>
                         <th>Berlaku</th>
                         <th>Ditetapkan</th>
+                        <th>Diambil</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -34,14 +39,15 @@
                                 <td>@item.data.Keperluan</td>
                                 <td>@($"{item.data.Mulai.ToString("dd/MM/yyyy")} - {item.data.Selesai.ToString("dd/MM/yyyy")}")</td>
                                 <td>@($"{item.data.TanggalPenetapan.ToString("dd/MM/yyyy")}")</td>
+                                <td>@(string.IsNullOrEmpty(item.data.DiambilOleh)?"Belum":"Sudah")</td>
                                 <td>
                                     <div class="dropdown" style="position:inherit !important">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Detail</a>
                                             <a class="dropdown-item" @onclick="@(()=>PrintAction(item.data))"><i class="bx bx-printer me-1"></i> Cetak</a>
+                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Pengambilan</a>
                                         </div>
                                     </div>
                                 </td>
@@ -55,12 +61,23 @@
     </div>
 </div>
 
-<Modal @ref="modal" Title="TambahEdit" IsVerticallyCentered=true>
+<Modal @ref="modal" Title="Pengambilan" IsVerticallyCentered=true>
     <BodyTemplate>
-        <EditForm Model="@model" OnValidSubmit="SaveAction">
+        <EditForm Model="@pengambilan" OnValidSubmit="SaveAction">
+            <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<PengambilanValidator>()) />
+            <div class="mb-3">
+                <label for="email" class="form-label">Diambil Oleh </label>
+                <InputText type="text" @bind-Value="pengambilan.Nama" class="form-control"></InputText>
+                <ValidationMessage For="@(() => pengambilan.Nama)" />
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Tanggal</label>
+                <InputDate @bind-Value="pengambilan.Tanggal" class="form-control"></InputDate>
+                <ValidationMessage For="@(() => pengambilan.Tanggal)" />
+            </div>
             <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
                 <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
-                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save changes</Button>
+                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save</Button>
             </div>
         </EditForm>
     </BodyTemplate>
@@ -68,172 +85,8 @@
 
 <ConfirmDialog @ref="confirmDialog" />
 
-@if (model != null)
-{
-    <div class="container justprint" style="width:100%">
-        <div class="containerbackground" style="width:100%">
-            <img  style="position:absolute; width:80%; z-index:-1; opacity:0.2" src="/logosatnarkoba.png">
-            @foreach (var item in Enumerable.Range(1, 65))
-            {
-                <p>SAT RESERSE NARKOBA POLRES JAYAPURA KOTA SAT RESERSE NARKOBA POLRES JAYAPURA</p>
-            }
-        </div>
-        <div style="margin:10px; display:flex; align-items:center;flex-direction:column">
-            <div style="width:100%; display:flex; align-items:center; justify-content:space-between">
-                <div style="display:flex;align-items:center;flex-direction:column;justify-content:center">
-                    <div style="font-weight:bold">KEPOLISIAN NEGARA REPUBLIK INDONESIA</div>
-                    <div style="font-weight:bold">DAERAH PAPUA</div>
-                    <div style="font-weight:bold">RESOT KOTA JAYAPURA KOTA</div>
-                    <div style="text-decoration:underline">Jalan jendra Ahmad Yani No 11 Jayapura 99111</div>
-                </div>
-                <div style="padding:5px 20px; border:1px solid black">
-                    <label style="font-size:30px; font-stretch:condensed">ASLI</label>
-                </div>
-            </div>
+<CetakSKBN model="@model"></CetakSKBN>
 
-
-            <img class="m-2" src="/polri.png" style="width:50px" />
-            <div style="text-decoration:underline; font-size:20px; font-weight:bold">SURAT KETERANGAN BEBAS NARKOBA</div>
-            <div>NOMOR : @model.Nomor </div>
-            <div class="mt-2">
-                <label>1. Kepala Kepolisian Resort Kota Jayapura Kota, dengan ini menerangkan bahwa :</label>
-                <div style="margin-left:14px">
-                    <table>
-                        <tr>
-                            <td style="width:250px">Nama</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Profile.Nama</td>
-                        </tr>
-                        <tr>
-                            <td style="width:250px">Jenis Kelamin</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Profile.JenisKelamin</td>
-                        </tr>
-                        <tr>
-                            <td style="width:250px">Kebangsaan</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Profile.Kebangsaan</td>
-                        </tr>
-                        <tr>
-                            <td style="width:250px">Agama</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Profile.Agama</td>
-                        </tr>
-                        <tr>
-                            <td>Tempat, Tanggal Lahir</td>
-                            <td>:</td>
-                            <td>@($"{model.Profile.TempatLahir}, {model.Profile.TanggalLahir.ToString("dd-MM-yyyy")}")</td>
-                        </tr>
-                        <tr>
-                            <td>Pekerjaan</td>
-                            <td>:</td>
-                            <td>@model.Profile.Pekerjaan</td>
-                        </tr>
-                        <tr>
-                            <td>Alamat</td>
-                            <td>:</td>
-                            <td>@model.Profile.Alamat </td>
-                        </tr>
-                        <tr>
-                            <td>Nomor NIK</td>
-                            <td>:</td>
-                            <td>@model.Profile.NomorNIK</td>
-                        </tr>
-                        <tr>
-                            <td>Nomor HP</td>
-                            <td>:</td>
-                            <td>@model.Profile.NomorHP</td>
-                        </tr>
-                        <tr class="mt-4">
-                            <td colspan="3">
-                                <div class="mt-3">
-                                    Menunjuk Surat Keterangan dari Dokter Polri Nomor : @model.NomorSKPN , tanggal @model.TanggalSKPN.ToString("dd MMMM yyyy"),
-                                    dan berdasarkan data yang ada  pada Satuan Reserse Narkoba Polresta Jayapura Kota bahwa yang
-                                    bersangkutan tidak tersangkut atau terlibat kasus <span><b>NARKOTIKA, PSIKOTROPIKA DAN ZAT ADIKTIF LAINNYA</b></span>
-                                </div>
-                            </td>
-                        </tr>
-
-                    </table>
-
-                </div>
-
-
-                <label class="mt-3">2. Surat keterangan ini diberikan untuk keperluan</label>
-                <div style="margin-left:14px">
-                    <div class="m-3" style="text-align:center">
-                        <label style="font-size:20px;font-style:italic"><b>@model.Keperluan.ToUpper()</b></label>
-                    </div>
-                    <table>
-                        <tr>
-                            <td style="width:250px">Surat ini berlaku dari tanggal</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Mulai.ToString("dd MMMM yyyy")</td>
-                        </tr>
-                        <tr>
-                            <td style="width:250px">Sampai dengan tanggal</td>
-                            <td style="width:10px">:</td>
-                            <td>@model.Selesai.ToString("dd MMMM yyyy")</td>
-                        </tr>
-                    </table>
-                </div>
-                <label class="mt-3">
-                    3. Demikian surat keterangan ini dibuat dan diberikan kepada yang bersangkutan
-                    untuk dapat digunkana seperlunya
-                </label>
-
-                <div class="mt-3" style="display:flex; align-items:end; justify-content:end;flex-direction:column">
-                    <div style="margin-right: 93px;">
-                        <div><label style="width:150px">Dikeluarhkan di</label><label>: Jayapura</label></div>
-                        <div style="text-decoration:underline"><label style="width:150px">Pada Tanggal </label><label>: @model.TanggalPenetapan.ToString("dd   MMMM   yyyy")</label></div>
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:end;flex-direction:column">
-                        <label>a.n. KEPALA KEPOLISIAN RESORT JAYAPURA KOTA</label>
-                        <label>P.s KASAT RESERSE NARKOBA</label>
-
-                        <label class="mt-5" style="text-decoration:underline"><b>ALAMSYAH ALI, SH., MH</b></label>
-                        <label ><b>IPTU NRP 82 70055</b></label>
-                    </div>
-                </div>
-
-                <label style="font-size:11px; margin-top:20px; font-style:italic">(SKBN ini tidak berlaku apabila ybs telibat kasus narkoba)</label>
-            </div>
-        </div>
-    </div>
-}
-
-<style>
-    body{
-        color:black;
-    }
-    table, tr, td {
-        border: none;
-        vertical-align: top;
-    }
-
-    .itemd {
-        width: 30%;
-    }
-
-    .container {
-        position: relative;
-    }
-
-    .containerbackground {
-        margin: 0rem;
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        z-index: -1;
-        color: #dfdfdfb5;
-        line-height: 0;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        flex-direction:column;
-    }
-</style>
 
 @inject HttpClient httpClient
 @inject ILocalStorageService localService
@@ -242,9 +95,19 @@
 @code {
     [Inject] protected ToastService ToastService { get; set; }
     ICollection<SKBNModel> permohonan;
+    ICollection<SKBNModel> source;
     SKBNModel model;
+    Pengambilan pengambilan;
     private Modal modal;
     private ConfirmDialog confirmDialog;
+
+    DateTime? startDate= DateTime.Now;
+    DateTime? endDate;
+
+
+    Task StartDateChange(){
+        
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,19 +116,41 @@
 
         if (response.IsSuccessStatusCode)
         {
-            permohonan = (await response.GetResult<IEnumerable<SKBNModel>>()).ToList();
+            source = (await response.GetResult<IEnumerable<SKBNModel>>()).ToList();
         }
+        permohonan = source.ToList();
     }
 
     async Task EditAction(SKBNModel data)
     {
-
+        pengambilan = new Pengambilan { Id= data.Id, Nama = data.DiambilOleh, Tanggal = data.TanggalPengambilan == null ? DateTime.Now : data.TanggalPengambilan.Value };
         await modal.ShowAsync();
     }
 
     async Task SaveAction()
     {
+     
+        try
+        {
+            var httpResponse = await httpClient.PostAsJsonAsync<Pengambilan>("api/permohonan/pengambilan", pengambilan);
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var result = await httpResponse.GetResult<Persyaratan>();
+                if (result == null)
+                    throw new SystemException("Data tidak berhasil disimpan !");
+                var dataToSave = model with { DiambilOleh = pengambilan.Nama!, TanggalPengambilan = pengambilan.Tanggal };
+                ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                await modal.HideAsync();
+                return;
+            }
 
+            throw new SystemException(await httpResponse.Error());
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
     }
 
     async Task PrintAction(SKBNModel value)
@@ -284,4 +169,6 @@
     {
         await modal?.HideAsync();
     }
+
+
 }

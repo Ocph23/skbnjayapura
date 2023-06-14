@@ -10,10 +10,13 @@
         <div style=" display:flex;justify-content:space-between; align-items:center">
             <h5 class="card-header">Data Permohonan</h5>
             <div>
-                <button @onclick="@(()=>navManager.NavigateTo("/pemohon/permohonan/0"))"
-                    style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;" >
-                    <i class="bx bx-plus-circle mb-2" style="font-size:30px"></i>
-                </button>
+               @if (haveAccess)
+                {
+                    <button @onclick="@(()=>navManager.NavigateTo("/pemohon/permohonan/0"))"
+                            style="border: none; background-color: transparent; margin: 0; padding: 0; margin-right: 20px;">
+                        <i class="bx bx-plus-circle mb-2" style="font-size:30px"></i>
+                    </button>
+                }
             </div>
         </div>
         <div class="table-responsive text-nowrap">
@@ -33,10 +36,10 @@
 
                     @if (persyaratans != null)
                     {
-                        @foreach (var item in persyaratans.Select((data,index)=> new {data,index}))
-                            {
+                        @foreach (var item in persyaratans.Select((data, index) => new { data, index }))
+                        {
                             <tr>
-                                <td>@(item.index+1)</td>
+                                <td>@(item.index + 1)</td>
                                 <td>@item.data.Nomor</td>
                                 <td>@item.data.Keperluan</td>
                                 <td>@item.data.Catatan</td>
@@ -72,18 +75,47 @@
     ICollection<Permohonan> persyaratans;
     Permohonan model = new Permohonan();
     private ConfirmDialog confirmDialog;
-
     //  List<ToastMessage> messages = new List<ToastMessage>();
-
+    bool haveAccess = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await httpClient.SetToken(localService);
-        var response = await httpClient.GetAsync("api/permohonan/byuser");
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            persyaratans = (await response.GetResult<IEnumerable<Permohonan>>()).ToList();
+            await httpClient.SetToken(localService);
+
+            
+
+
+            var response = await httpClient.GetAsync("api/permohonan/byuser");
+
+            if (response.IsSuccessStatusCode)
+            {
+                persyaratans = (await response.GetResult<IEnumerable<Permohonan>>()).ToList();
+            }
+
+
+            var response1 = await httpClient.GetAsync("api/account/profile");
+            if (response1.IsSuccessStatusCode)
+            {
+                var profilex = await response1.GetResult<Profile>();
+                if (profilex == null)
+                    throw new SystemException("Silahkan Lengkapi Data Profile Anda !");
+                else
+                {
+                    if (!profilex.Aktif)
+                        throw new SystemException("Accoun Anda Tidak Aktif, Hubungi Administrator !");
+                    else
+                        haveAccess = true;
+                }
+            }
+            else
+                throw new SystemException("Silahkan Lengkapi Data Profile Anda !");
+
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
         }
     }
 

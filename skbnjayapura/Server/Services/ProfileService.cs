@@ -75,8 +75,19 @@ public class ProfileService : IProfileService
         try
         {
             var oldData = dbContext.Profiles.SingleOrDefault(x => x.Id == id);
-            dbContext.Entry(oldData).CurrentValues.SetValues(model);
-            dbContext.Entry(oldData.UserId).State = Microsoft.EntityFrameworkCore.EntityState.Unchanged;
+
+            oldData.NomorHP= model.NomorHP;
+            oldData.NomorNIK= model.NomorNIK;
+            oldData.Nama= model.Nama;
+            oldData.Aktif= model.Aktif;
+            oldData.Alamat= model.Alamat;
+            oldData.Agama= model.Agama;
+            oldData.JenisKelamin= model.JenisKelamin;
+            oldData.Kebangsaan= model.Kebangsaan;
+            oldData.Pekerjaan= model.Pekerjaan;
+            oldData.TanggalLahir= model.TanggalLahir;
+            oldData.TempatLahir= model.NomorHP;
+            oldData.Photo= model.Photo;
             dbContext.SaveChanges();
             return Task.FromResult(model);
         }

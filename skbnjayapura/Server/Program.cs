@@ -15,7 +15,7 @@ if (builder.Environment.IsProduction())
 {
     builder.WebHost.UseKestrel(serverOptions =>
     {
-        serverOptions.ListenLocalhost(5008);
+        serverOptions.ListenLocalhost(5010);
     });
 }
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));

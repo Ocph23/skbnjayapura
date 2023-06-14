@@ -87,6 +87,22 @@ namespace skbnjayapura.Server.Controllers
 
 
 
+        [HttpPost("pengambilan")]
+        public async Task<IActionResult> PostPengambilan([FromBody] Pengambilan value)
+        {
+            try
+            {
+                return Ok(await permohonaService.PostPengambilan(value));
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+
 
         // PUT api/<PermohonanController>/5
         [HttpPut("{id}")]

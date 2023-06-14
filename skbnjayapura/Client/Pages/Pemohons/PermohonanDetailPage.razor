@@ -75,7 +75,7 @@
                                         <td>@(item.index + 1)</td>
                                         <td>@item.data.Persyaratan.Nama</td>
                                         <td>
-                                            <FileView CanUpload="true" FileName="@item.data.FileName" DataId="@item.data.Id"></FileView>
+                                            <FileView CanUpload="@(!item.data.Verifikasi)" FileName="@item.data.FileName" DataId="@item.data.Id"></FileView>
                                         </td>
                                     </tr>
                                 }

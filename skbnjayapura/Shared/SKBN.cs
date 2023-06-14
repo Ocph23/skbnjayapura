@@ -10,5 +10,7 @@
         public DateTime? BerlakuMulai { get; set; } = DateTime.Now;
         public DateTime? BerlakuSelesai { get; set; }
         public DateTime? TanggalPersetujuan { get; set; } = DateTime.Now;
+        public DateTime? TangglPengambilan { get; set; }
+        public string? DiambilOleh { get; set; } = string.Empty;
     }
 }

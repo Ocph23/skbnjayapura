@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using static skbnjayapura.Client.Pages.Account.RegisterPage;
+using skbnjayapura.Shared;
 
 namespace skbnjayapura.Client.Validators;
 public class RegisterValidator : AbstractValidator<Register>

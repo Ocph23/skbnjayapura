@@ -7,57 +7,57 @@
     <div class="card">
         <div style=" display:flex;justify-content:space-between; align-items:center">
             <h5 class="card-header">Data SKBN</h5>
-            <div class="d-flex">
-                  <InputDate @bind-Value="startDate" onchange="@StartDateChange" class="form-control"></InputDate>
-                  <InputDate @bind-Value="endDate" class="form-control"></InputDate>
+            <div class="d-flex justify-content-center align-items-center m-2">
+                <input type="date" class="form-control" placeholder="Mulai" @onchange="@OnStartChange" />
+                <label class="m-2">s/d</label>
+                <input type="date" class="form-control" placeholder="Selesai" @onchange="@OnEndChange" />
+                <a style="width:60px; color:forestgreen;" class="dropdown-item" @onclick="@(()=>PrintLaporanAction())"><i class="bx bx-printer me-1"></i></a>
             </div>
         </div>
-        <div class="table-responsive text-nowrap">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nomor SKBN</th>
-                        <th>Pemohon</th>
-                        <th>Keperluan</th>
-                        <th>Berlaku</th>
-                        <th>Ditetapkan</th>
-                        <th>Diambil</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="table-border-bottom-0">
+        <table class="table mt-5">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nomor SKBN</th>
+                    <th>Pemohon</th>
+                    <th>Keperluan</th>
+                    <th>Berlaku</th>
+                    <th>Ditetapkan</th>
+                    <th>Diambil</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
 
-                    @if (permohonan != null)
+                @if (permohonan != null)
+                {
+                    @foreach (var item in permohonan.Select((data, index) => new { data, index }))
                     {
-                        @foreach (var item in permohonan.Select((data, index) => new { data, index }))
-                        {
-                            <tr>
-                                <td>@(item.index + 1)</td>
-                                <td>@item.data.Nomor</td>
-                                <td>@item.data.Profile.Nama</td>
-                                <td>@item.data.Keperluan</td>
-                                <td>@($"{item.data.Mulai.ToString("dd/MM/yyyy")} - {item.data.Selesai.ToString("dd/MM/yyyy")}")</td>
-                                <td>@($"{item.data.TanggalPenetapan.ToString("dd/MM/yyyy")}")</td>
-                                <td>@(string.IsNullOrEmpty(item.data.DiambilOleh)?"Belum":"Sudah")</td>
-                                <td>
-                                    <div class="dropdown" style="position:inherit !important">
-                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                            <i class="bx bx-dots-vertical-rounded"></i>
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" @onclick="@(()=>PrintAction(item.data))"><i class="bx bx-printer me-1"></i> Cetak</a>
-                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Pengambilan</a>
-                                        </div>
+                        <tr>
+                            <td>@(item.index + 1)</td>
+                            <td>@item.data.Nomor</td>
+                            <td>@item.data.Profile.Nama</td>
+                            <td>@item.data.Keperluan</td>
+                            <td>@($"{item.data.Mulai.ToString("dd/MM/yyyy")} - {item.data.Selesai.ToString("dd/MM/yyyy")}")</td>
+                            <td>@($"{item.data.TanggalPenetapan.ToString("dd/MM/yyyy")}")</td>
+                            <td>@(string.IsNullOrEmpty(item.data.DiambilOleh) ? "Belum" : "Sudah")</td>
+                            <td>
+                                <div class="dropdown" style="position:inherit !important">
+                                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                        <i class="bx bx-dots-vertical-rounded"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" @onclick="@(()=>PrintAction(item.data))"><i class="bx bx-printer me-1"></i> Cetak</a>
+                                        <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-edit-alt me-1"></i> Pengambilan</a>
                                     </div>
-                                </td>
-                            </tr>
+                                </div>
+                            </td>
+                        </tr>
 
-                        }
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -85,7 +85,18 @@
 
 <ConfirmDialog @ref="confirmDialog" />
 
+@if (laporan)
+{
+<CetakLaporannSKBN Data="permohonan" StartDate="@startDate" EndDate="@endDate"></CetakLaporannSKBN>
+
+}
+else
+{
 <CetakSKBN model="@model"></CetakSKBN>
+}
+
+
+
 
 
 @inject HttpClient httpClient
@@ -101,13 +112,73 @@
     private Modal modal;
     private ConfirmDialog confirmDialog;
 
-    DateTime? startDate= DateTime.Now;
+    DateTime? startDate;
     DateTime? endDate;
+    bool laporan;
 
 
-    Task StartDateChange(){
-        
+    async Task PrintLaporanAction()
+    {
+        laporan = true;
+        StateHasChanged();
+        await Task.Delay(500);
+        await JS.InvokeVoidAsync("window.print");
     }
+
+    async Task OnStartChange(ChangeEventArgs args)
+    {
+        try
+        {
+            startDate = Convert.ToDateTime(args.Value);
+            await OnDateChange(startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    async Task OnEndChange(ChangeEventArgs args)
+    {
+        try
+        {
+            endDate = Convert.ToDateTime(args.Value);
+            await OnDateChange(startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    Task OnDateChange(DateTime? startDateX, DateTime? endDateX)
+    {
+        try
+        {
+            IEnumerable<SKBNModel> datas = new List<SKBNModel>();
+
+            if (startDateX != null)
+                datas = source.Where(x => x.TanggalPenetapan >= startDateX.Value).AsEnumerable();
+
+            if (endDateX != null)
+            {
+                if (endDateX < startDateX)
+                    throw new Exception("Tanggal Mulai Harus Lebih Besar !");
+
+                datas = source.Where(x => x.TanggalPenetapan >= startDateX.Value && x.TanggalPenetapan <= endDateX.Value).AsEnumerable();
+            }
+
+            permohonan = datas.ToList();
+
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+
+        return Task.CompletedTask;
+    }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,18 +189,17 @@
         {
             source = (await response.GetResult<IEnumerable<SKBNModel>>()).ToList();
         }
-        permohonan = source.ToList();
     }
 
     async Task EditAction(SKBNModel data)
     {
-        pengambilan = new Pengambilan { Id= data.Id, Nama = data.DiambilOleh, Tanggal = data.TanggalPengambilan == null ? DateTime.Now : data.TanggalPengambilan.Value };
+        pengambilan = new Pengambilan { Id = data.Id, Nama = data.DiambilOleh, Tanggal = data.TanggalPengambilan == null ? DateTime.Now : data.TanggalPengambilan.Value };
         await modal.ShowAsync();
     }
 
     async Task SaveAction()
     {
-     
+
         try
         {
             var httpResponse = await httpClient.PostAsJsonAsync<Pengambilan>("api/permohonan/pengambilan", pengambilan);
@@ -148,13 +218,13 @@
         }
         catch (Exception ex)
         {
-
-            throw;
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
         }
     }
 
     async Task PrintAction(SKBNModel value)
     {
+        laporan = false;
         model = value;
         StateHasChanged();
         await Task.Delay(500);

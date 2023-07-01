@@ -1,0 +1,77 @@
+﻿@using System.Text;
+@if (Data != null)
+{
+    <div class="container justprint" style="width:100%">
+        <div style="margin:10px; display:flex;">
+            <img class="m-2" src="/polri.png" style="width:50px" />
+            <div style="width:100%; display:flex; align-items:center; justify-content:space-between">
+                <div style="display:flex;align-items:center;flex-direction:column;justify-content:center">
+                    <div style="font-weight:bold">KEPOLISIAN NEGARA REPUBLIK INDONESIA</div>
+                    <div style="font-weight:bold">DAERAH PAPUA</div>
+                    <div style="font-weight:bold">RESOT KOTA JAYAPURA KOTA</div>
+                    <div style="text-decoration:underline">Jalan jendra Ahmad Yani No 11 Jayapura 99111</div>
+                </div>
+
+            </div>
+        </div>
+
+        <center><h6>LAPORAN SKBN</h6> </center>
+        <center><h6>PERIODE : @GetPeriode()</h6> </center>
+
+            <table class="table mt-4">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nomor</th>
+                        <th>Pemohon</th>
+                        <th>Keperluan</th>
+                        <th>Berlaku</th>
+                        <th>Ditetapkan</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+
+                    @if (Data != null)
+                    {
+                        @foreach (var item in Data.Select((data, index) => new { data, index }))
+                        {
+                            <tr>
+                                <td>@(item.index + 1)</td>
+                                <td>@item.data.Nomor</td>
+                                <td>@item.data.Profile.Nama</td>
+                                <td>@item.data.Keperluan</td>
+                                <td>@($"{item.data.Mulai.ToString("dd/MM/yyyy")} - {item.data.Selesai.ToString("dd/MM/yyyy")}")</td>
+                                <td>@($"{item.data.TanggalPenetapan.ToString("dd/MM/yyyy")}")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        
+    </div>
+}
+
+
+@code {
+
+    [Parameter]
+    public IEnumerable<SKBNModel> Data { get; set; }
+    [Parameter]
+    public DateTime? StartDate{ get; set; }
+
+    [Parameter]
+    public DateTime? EndDate { get; set; }
+
+
+
+    string GetPeriode()
+    {
+        StringBuilder sb = new();
+        if (StartDate != null)
+            sb.Append($"{StartDate.Value.ToString("dd/MM/yyyy")}");
+        if(EndDate !=null)
+            sb.Append($" - {EndDate.Value.ToString("dd/MM/yyyy")}");
+        return sb.ToString();
+    }
+
+}

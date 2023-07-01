@@ -101,16 +101,11 @@
 </div>
 
 
-<Modal @ref="modal" Title="TambahEdit" IsVerticallyCentered=true>
+<Modal @ref="modal" Title="Tambah/Edit" IsVerticallyCentered=true>
     <BodyTemplate>
         <EditForm Model="@model.Skbn" OnValidSubmit="OnValidSubmitAction">
             <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<SKBNValidator>()) />
-            <div class="mb-3">
-                <label for="email" class="form-label">NOMO SKBN</label>
-                <InputText type="text" @bind-Value="model.Skbn.Nomor" class="form-control"></InputText>
-                <ValidationMessage For="@(() => model.Skbn.Nomor)" />
-
-            </div>
+           
             <div class="mb-3">
                 <label for="email" class="form-label">Nomor Surat Keterangan Pemeriksaan Narkoba (SKPN)</label>
                 <InputText type="text" @bind-Value="model.Skbn.NomorSKPN" class="form-control"></InputText>

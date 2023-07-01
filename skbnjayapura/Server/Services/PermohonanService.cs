@@ -93,7 +93,7 @@ public class PermohonanService : IPermohonanService
         var data = from a in dbContext.Permohonans
                 .Include(x => x.Profile)
                 .Include(x => x.Skbn).Where(x => x.Skbn != null)
-                   select new SKBNModel(a.Skbn.Id, a.Skbn.Nomor, a.Profile, a.Skbn.NomorSKPN, a.Skbn.TanggalSKPN.Value,
+                   select new SKBNModel(a.Skbn.Id, a.Skbn.NomorView, a.Profile, a.Skbn.NomorSKPN, a.Skbn.TanggalSKPN.Value,
                    a.Keperluan, a.Skbn.BerlakuMulai.Value,
                    a.Skbn.BerlakuSelesai.Value,
                    a.Skbn.TanggalPersetujuan.Value,a.Skbn.TangglPengambilan, a.Skbn.DiambilOleh);

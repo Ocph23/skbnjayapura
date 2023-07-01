@@ -1,0 +1,6 @@
+﻿@media print {
+    td, tr, th {
+        padding: 3px !important;
+        font-size:10px;
+    }
+}

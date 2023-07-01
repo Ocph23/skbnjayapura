@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using skbnjayapura.Shared;
-using static skbnjayapura.Client.Pages.Account.LoginPage;
 
 namespace skbnjayapura.Client.Validators;
 

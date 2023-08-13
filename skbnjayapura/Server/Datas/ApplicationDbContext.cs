@@ -14,6 +14,7 @@ namespace skbnjayapura.Server.Datas
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Permohonan> Permohonans { get; set; }
         public DbSet<Persyaratan> Persyaratans { get; set; }
+        public DbSet<Pimpinan> Pimpinans { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

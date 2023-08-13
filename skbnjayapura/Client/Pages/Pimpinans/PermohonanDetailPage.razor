@@ -1,5 +1,5 @@
-﻿@layout AdminLayout
-@page "/admin/permohonan/{id:int}"
+﻿@layout PimpinanLayout
+@page "/pimpinan/permohonan/{id:int}"
 @using System.Net.Http.Headers;
 @using System.Net;
 
@@ -12,15 +12,15 @@
 <PageTitle>@title</PageTitle>
 
 <div class="container-xxl flex-grow-1 container-p-y">
-    <EditForm Model="@model" OnValidSubmit="CreateSKBN">
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmitAction">
         <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<PermohonanValidator>()) />
         <div class="card mb-4">
             <div style="display:flex;justify-content:space-between">
-                <h5 class="card-header">@title <span class="badge rounded-pill bg-warning">@model.Status</span></h5>
-                <div style="display:flex;align-items:center; margin-right:30px">
+                <h5 class="card-header">@title  <span class="badge rounded-pill bg-warning">@model.Status</span></h5>
+               <div style="display:flex;align-items:center; margin-right:30px">
                     @if (model.Status == StatusPermohonan.Verifikasi || (model.Status == StatusPermohonan.Baru && model.ItemPersyaratan.Count(x => !x.Verifikasi) <= 0))
                     {
-                        <Button Type="ButtonType.Submit" Class="btn btn-success">Buat SKBN</Button>
+                        <Button Type="ButtonType.Submit" Class="btn btn-success">Setujui</Button>
                     }
                 </div>
             </div>
@@ -31,36 +31,29 @@
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">Keperluan</label>
-                    <InputTextArea readonly type="text" @bind-Value="model.Keperluan" class="form-control"></InputTextArea>
+                    <InputTextArea type="text" @bind-Value="model.Keperluan" class="form-control"></InputTextArea>
                     <ValidationMessage For="@(() => model.Keperluan)" />
                 </div>
                 <div class="mb-3">
                     <label for="email" class="form-label">Catatan</label>
-                    <InputTextArea readonly type="text" @bind-Value="model.Catatan" class="form-control"></InputTextArea>
+                    <InputTextArea type="text" @bind-Value="model.Catatan" class="form-control"></InputTextArea>
                     <ValidationMessage For="@(() => model.Keperluan)" />
                 </div>
 
                 <div class="md-3">
                     <label class="form-label">Tanggal</label>
-                    <InputDate readonly Type="InputDateType.Date" @bind-Value="model.TanggalPengajuan" class="form-control"></InputDate>
+                    <InputDate Type="InputDateType.Date" @bind-Value="model.TanggalPengajuan" class="form-control"></InputDate>
                     <ValidationMessage For="@(() => model.TanggalPengajuan)" />
                 </div>
             </div>
         </div>
     </EditForm>
 
-
     @if (Id > 0)
     {
-        <div class="card mt-0">
+        <div class="card">
             <div style="display:flex;justify-content:space-between">
                 <h5 class="card-header">Data Persyaratan</h5>
-                <div style="display:flex;align-items:center; margin-right:30px">
-                    @if (model.ItemPersyaratan.Count(x => !x.Verifikasi) <= 0)
-                    {
-                        <span class="badge rounded-pill bg-primary">Terverifikasi</span>
-                    }
-                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive text-nowrap">
@@ -69,8 +62,7 @@
                             <tr>
                                 <th style="width:20px">No</th>
                                 <th>Nama Persyaratan</th>
-                                <th style="width:20px">Dukumen/Photo</th>
-                                <th style="width:20px">Verifikasi</th>
+                                <th style="width:20px">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="table-border-bottom-0">
@@ -83,10 +75,7 @@
                                         <td>@(item.index + 1)</td>
                                         <td>@item.data.Persyaratan.Nama</td>
                                         <td>
-                                            <FileView CanUpload="false" FileName="@item.data.FileName" DataId="@item.data.Id"></FileView>
-                                        </td>
-                                        <td>
-                                            <input type="checkbox" checked="@item.data.Verifikasi" @oninput="@((x)=> VerifikasiPersyaratan(item.data,x))">
+                                            <FileView CanUpload="@(!item.data.Verifikasi)" FileName="@item.data.FileName" DataId="@item.data.Id"></FileView>
                                         </td>
                                     </tr>
                                 }
@@ -101,46 +90,6 @@
 </div>
 
 
-<Modal @ref="modal" Title="Tambah/Edit" IsVerticallyCentered=true>
-    <BodyTemplate>
-        <EditForm Model="@model.Skbn" OnValidSubmit="OnValidSubmitAction">
-            <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<SKBNValidator>()) />
-           
-            <div class="mb-3">
-                <label for="email" class="form-label">Nomor Surat Keterangan Pemeriksaan Narkoba (SKPN)</label>
-                <InputText type="text" @bind-Value="model.Skbn.NomorSKPN" class="form-control"></InputText>
-                <ValidationMessage For="@(() => model.Skbn.NomorSKPN)" />
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Tanggal SKPN</label>
-                <DateInput type="text" @bind-Value="model.Skbn.TanggalSKPN" class="form-control"></DateInput>
-                <ValidationMessage For="@(() => model.Skbn.TanggalSKPN)" />
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Berlaku Mulai</label>
-                <DateInput type="text" @bind-Value="model.Skbn.BerlakuMulai" class="form-control"></DateInput>
-                <ValidationMessage For="@(() => model.Skbn.BerlakuMulai)" />
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Berlaku Hingga</label>
-                <DateInput type="text" @bind-Value="model.Skbn.BerlakuSelesai" class="form-control"></DateInput>
-                <ValidationMessage For="@(() => model.Skbn.BerlakuSelesai)" />
-            </div>
-
-            <div class="mb-3">
-                <label for="email" class="form-label">Tanggal Persetujuan</label>
-                <DateInput type="text" @bind-Value="model.Skbn.TanggalPersetujuan" class="form-control"></DateInput>
-                <ValidationMessage For="@(() => model.Skbn.TanggalPersetujuan)" />
-            </div>
-
-            <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
-                <Button Color="ButtonColor.Secondary" @onclick="@(()=> modal.HideAsync())">Close</Button>
-                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save changes</Button>
-            </div>
-        </EditForm>
-    </BodyTemplate>
-</Modal>
-
 @code {
     [Parameter]
     public int Id { get; set; }
@@ -148,11 +97,10 @@
     string title = "Permohonan Baru";
     string saveIcon = "bx-check-circle";
     Permohonan model = new Permohonan();
-    Profile profile;
+    Pimpinan pimpinan;
     private long _uploaded = 0;
     private double _percentage = 0;
 
-    Modal modal = default!;
 
     void OnUploadResult(string fileName, ItemPersyaratan persyaratan)
     {
@@ -160,43 +108,17 @@
         StateHasChanged();
     }
 
-    async Task CreateSKBN()
-    {
-        if (model.Skbn == null)
-            model.Skbn = new SKBN();
-
-        await modal.ShowAsync();
-    }
-
-    async Task VerifikasiPersyaratan(ItemPersyaratan data, ChangeEventArgs arg)
-    {
-        try
-        {
-            var model = new ItemPersyaratan { Id = data.Id, FileName = data.FileName, Persyaratan = data.Persyaratan, Verifikasi = (bool)arg.Value! };
-            var httpResponse = await httpClient.PostAsJsonAsync<ItemPersyaratan>("api/permohonan/verifikasipersyaratan", model);
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var result = await httpResponse.GetResult<bool>();
-                if (!result)
-                    throw new SystemException("Data tidak berhasil disimpan !");
-
-                data.Verifikasi = model.Verifikasi;
-                ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
-                return;
-            }
-            throw new SystemException(await httpResponse.Error());
-        }
-        catch (Exception ex)
-        {
-            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
-        }
-    }
-
     protected override async Task OnInitializedAsync()
     {
         await httpClient.SetToken(localStorage);
         try
         {
+            await httpClient.SetToken(localStorage);
+            var response = await httpClient.GetAsync("api/pimpinan/byuser");
+            if (response.IsSuccessStatusCode)
+                pimpinan = await response.GetResult<Pimpinan>();
+            else
+                throw new SystemException("Terjadi Kesalahan, Coba Ulangi Lagi !");
             if (Id > 0)
             {
                 title = "Detail Permohonan";
@@ -204,7 +126,7 @@
                 if (response2.IsSuccessStatusCode)
                     model = await response2.GetResult<Permohonan>();
                 else
-                    throw new SystemException("Data Permohonan Tidak Ditemukan !");
+                    throw new SystemException("Silahkan Lengkapi Data Permohonan Anda !");
             }
         }
         catch (Exception ex)
@@ -219,28 +141,7 @@
         saveIcon = "bx bx-loader bx-spin";
         try
         {
-            model.Status = StatusPermohonan.Terbit;
-            var httpResponse = await httpClient.PutAsJsonAsync<Permohonan>($"api/permohonan/{model.Id}", model);
-            if (httpResponse.IsSuccessStatusCode)
-            {
-                var result = await httpResponse.GetResult<Permohonan>();
-                if (result == null)
-                    throw new SystemException("Data tidak berhasil diubah !");
-
-                if (result != null)
-                {
-                    model.Id = result.Id;
-                    model.Keperluan = result.Keperluan;
-                }
-                ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
-                await Task.Delay(500);
-                saveIcon = "bxs-check-circle saveAnimation";
-                await modal.HideAsync();
-                StateHasChanged();
-                return;
-            }
-
-            throw new SystemException(await httpResponse.Error());
+            
         }
         catch (Exception ex)
         {

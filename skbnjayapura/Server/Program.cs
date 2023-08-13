@@ -77,6 +77,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPersyaratanService, PersyaratanService>();
 builder.Services.AddScoped<IPermohonanService, PermohonanService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IPimpinanService, PimpinanService>();
 
 var app = builder.Build();
 
@@ -92,6 +93,7 @@ using (var scope = app.Services.CreateScope())
     {
         dbContext.Roles.Add(new IdentityRole { Name = "Admin", NormalizedName = "ADMIN" });
         dbContext.Roles.Add(new IdentityRole { Name = "Pemohon", NormalizedName = "PEMOHON" });
+        dbContext.Roles.Add(new IdentityRole { Name = "Pimpinan", NormalizedName = "PIMPINAN" });
         dbContext.SaveChanges();
     }
 

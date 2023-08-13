@@ -16,5 +16,7 @@ public interface IAccountService
     Task<Profile> GetProfile(string userId);
     Task<Profile> PostProfile(Profile value);
     Task<Profile> PutProfile(int id, Profile value);
+     Task<IdentityUser> CreateUser(RegisterRequest requst);
+   
 }
 

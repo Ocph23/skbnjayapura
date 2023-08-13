@@ -8,11 +8,11 @@
         public DateTime? TanggalSKPN { get; set; }
         public DateTime? BerlakuMulai { get; set; } = DateTime.Now;
         public DateTime? BerlakuSelesai { get; set; }
-        public DateTime? TanggalPersetujuan { get; set; } = DateTime.Now;
+        public DateTime? TanggalPersetujuan { get; set; } =DateTime.Now;
         public DateTime? TangglPengambilan { get; set; }
         public string? DiambilOleh { get; set; } = string.Empty;
-
-        public string NomorView => TanggalPersetujuan == null ? "" : $"SKBN/{Id}/{GetBulan(TanggalPersetujuan.Value)}/{TanggalPersetujuan.Value.Year}/Narkoba";
+        public string NomorView => TanggalPersetujuan == null ? "" : $"SKBN/{Nomor}/{GetBulan(TanggalPersetujuan.Value)}/{TanggalPersetujuan.Value.Year}/Narkoba";
+        public Pimpinan? DiSetujuiOleh { get; set; }
 
         string GetBulan(DateTime date) => date.Month switch
         {

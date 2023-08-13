@@ -11,15 +11,15 @@ using skbnjayapura.Server.Datas;
 namespace skbnjayapura.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230604043633__tanggalPengambilan")]
-    partial class _tanggalPengambilan
+    [Migration("20230722114000_persetujuan")]
+    partial class persetujuan
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.5")
+                .HasAnnotation("ProductVersion", "7.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -303,6 +303,38 @@ namespace skbnjayapura.Server.Migrations
                     b.ToTable("Persyaratans");
                 });
 
+            modelBuilder.Entity("skbnjayapura.Shared.Pimpinan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Jabatan")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NRP")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Pangkat")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Pimpinans");
+                });
+
             modelBuilder.Entity("skbnjayapura.Shared.Profile", b =>
                 {
                     b.Property<int>("Id")
@@ -365,6 +397,9 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<DateTime?>("BerlakuSelesai")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("DiSetujuiOlehId")
+                        .HasColumnType("int");
+
                     b.Property<string>("DiambilOleh")
                         .HasColumnType("longtext");
 
@@ -384,6 +419,8 @@ namespace skbnjayapura.Server.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DiSetujuiOlehId");
 
                     b.HasIndex("Nomor")
                         .IsUnique();
@@ -470,6 +507,15 @@ namespace skbnjayapura.Server.Migrations
                     b.Navigation("Profile");
 
                     b.Navigation("Skbn");
+                });
+
+            modelBuilder.Entity("skbnjayapura.Shared.SKBN", b =>
+                {
+                    b.HasOne("skbnjayapura.Shared.Pimpinan", "DiSetujuiOleh")
+                        .WithMany()
+                        .HasForeignKey("DiSetujuiOlehId");
+
+                    b.Navigation("DiSetujuiOleh");
                 });
 
             modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>

@@ -101,8 +101,19 @@ namespace skbnjayapura.Server.Controllers
             }
         }
 
-
-
+        [Authorize(Roles = "Pimpinan")]
+        [HttpPost("persetujuan/{id}")]
+        public async Task<IActionResult> PostPersetujuan(int id,[FromBody] Pimpinan value)
+        {
+            try
+            {
+                return Ok(await permohonaService.PostPersetujuan(id,value));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         // PUT api/<PermohonanController>/5
         [HttpPut("{id}")]

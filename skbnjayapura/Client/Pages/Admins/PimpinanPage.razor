@@ -1,0 +1,241 @@
+﻿@layout AdminLayout
+@page "/admin/pimpinan"
+
+@attribute [Authorize(Roles = "Admin")]
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card">
+          <div style=" display:flex;justify-content:space-between; align-items:center">
+            <h5 class="card-header">Data Pimpinan</h5>
+            <div>
+                <button @onclick="OnShowModalClick" class="btn btn-primary m-3">Add</button>
+            </div>
+        </div>
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NRP</th>
+                        <th>Pangkat</th>
+                        <th>Nama</th>
+                        <th>Jabatan</th>
+                        <th style="width: 75px;">Status</th>
+                        <th style="width: 30px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="table-border-bottom-0">
+
+                    @if (Pimpinans != null)
+                    {
+                        @foreach (var item in Pimpinans.Select((data, index) => new { data, index }))
+                        {
+                            <tr>
+                                <td>@(item.index + 1)</td>
+                                <td>@item.data.NRP</td>
+                                <td>@item.data.Pangkat</td>
+                                <td>@item.data.Name</td>
+                                <td>@item.data.Jabatan</td>
+                                <td><span class="badge bg-label-primary me-1">@(item.data.Active ? "Aktif" : "Tidak Aktif")</span></td>
+                                <td>
+                                    <div class="dropdown" style="position:inherit !important">
+                                        <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                            <i class="bx bx-dots-vertical-rounded"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" @onclick="@(()=> EditAction(item.data))"><i class="bx bx-detail me-1"></i> Detail</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        }
+                    }
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modal" Title="PROFIL PIMPINAN" Size="ModalSize.Large" IsVerticallyCentered=true>
+    <BodyTemplate>
+        <EditForm Model="@model" OnValidSubmit="SaveAction">
+            <div class="row">
+                <div class="col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <InputText  type="email" @bind-Value="model.Email" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nama </label>
+                        <InputText  type="text" @bind-Value="model.Name" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">NRP</label>
+                        <InputText  type="text" @bind-Value="model.NRP"  class="form-control"></InputText>
+                    </div>
+                           <div class="mb-3">
+                        <label class="form-label">Pangkat</label>
+                        <InputText  type="text" @bind-Value="model.Pangkat" class="form-control"></InputText>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jabatan</label>
+                        <InputText  type="text" @bind-Value="model.Jabatan" class="form-control"></InputText>
+                    </div>
+                       <div style="display: flex; align-items:center">
+                        <InputCheckbox style="width: 20px; height:20px" @bind-Value="model.Active" ></InputCheckbox>
+                        <label class="form-label" style="margin: 3px;">Aktif</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
+                <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
+                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save </Button>
+            </div>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+<ConfirmDialog @ref="confirmDialog" />
+
+@inject HttpClient httpClient
+@inject ILocalStorageService localService
+
+@code {
+    [Inject] protected ToastService ToastService { get; set; }
+    ICollection<Pimpinan> Pimpinans;
+    Pimpinan model = new Pimpinan();
+    private Modal modal;
+    private ConfirmDialog confirmDialog;
+
+    //  List<ToastMessage> messages = new List<ToastMessage>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await httpClient.SetToken(localService);
+        var response = await httpClient.GetAsync("api/Pimpinan");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Pimpinans = (await response.GetResult<IEnumerable<Pimpinan>>()).ToList();
+        }
+    }
+
+    async Task EditAction(Pimpinan data)
+    {
+        model = new Pimpinan
+            {
+                Id = data.Id,
+                Name = data.Name,
+                Email = data.Email,
+                Jabatan = data.Jabatan,
+                Active = data.Active,
+                Pangkat = data.Pangkat,
+                NRP = data.NRP
+            };
+        await modal.ShowAsync();
+    }
+
+    async Task SaveAction()
+    {
+        try
+        {
+            var pimpinanregisterRequest = new PimpinanRegisterRequest(model, "Sony@77");  
+
+            if(model.Id<=0){
+                var httpResponse = await httpClient.PostAsJsonAsync($"api/Pimpinan", pimpinanregisterRequest);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Pimpinan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil diubah !");
+
+                    Pimpinans.Add(result);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await modal.HideAsync();
+                    return;
+                }
+                throw new SystemException(await httpResponse.Error());
+            }else{
+                var httpResponse = await httpClient.PutAsJsonAsync<Pimpinan>($"api/Pimpinan/{model.Id}", model);
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var result = await httpResponse.GetResult<Pimpinan>();
+                    if (result == null)
+                        throw new SystemException("Data tidak berhasil diubah !");
+
+                    var data = Pimpinans.SingleOrDefault(x => x.Id == model.Id);
+                    if (data != null)
+                    {
+                        data.Id = result.Id;
+                        data.Name = result.Name;
+                        data.NRP = result.Name;
+                        data.Pangkat = result.Name;
+                        data.Jabatan = result.Name;
+                        data.Active = result.Active;
+                    }
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
+                    await modal.HideAsync();
+                    return;
+                }
+                throw new SystemException(await httpResponse.Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    async Task DeleteAction(Pimpinan value)
+    {
+        try
+        {
+            var options = new ConfirmDialogOptions
+                {
+                    YesButtonText = "OK",
+                    YesButtonColor = ButtonColor.Success,
+                    NoButtonText = "CANCEL",
+                    NoButtonColor = ButtonColor.Danger
+                };
+            var confirmation = await confirmDialog.ShowAsync(
+                title: "Delete",
+                message1: "Hapus Pimpinan ??",
+                confirmDialogOptions: options);
+            if (confirmation)
+            {
+                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/Pimpinan/{value.Id}");
+                if (deleted)
+                {
+
+                    var data = Pimpinans.SingleOrDefault(x => x.Id == value.Id);
+                    Pimpinans.Remove(data);
+                    ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil Hapus Data !"));
+                    await modal.HideAsync();
+                    await InvokeAsync(() => StateHasChanged());
+                    return;
+                }
+                throw new SystemException("Data tidak berhasil dihapus !");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+    }
+
+    private async Task OnShowModalClick()
+    {
+        model = new Pimpinan();
+        await modal?.ShowAsync();
+    }
+    private async Task OnHideModalClick()
+    {
+        await modal?.HideAsync();
+    }
+
+
+
+}

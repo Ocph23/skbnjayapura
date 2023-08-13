@@ -92,12 +92,13 @@ public class PermohonanService : IPermohonanService
     {
         var data = from a in dbContext.Permohonans
                 .Include(x => x.Profile)
-                .Include(x => x.Skbn).Where(x => x.Skbn != null)
+                .Include(x => x.Skbn).ThenInclude(x=>x.DiSetujuiOleh)
+                .Where(x => x.Skbn != null)
                    select new SKBNModel(a.Skbn.Id, a.Skbn.NomorView, a.Profile, a.Skbn.NomorSKPN, a.Skbn.TanggalSKPN.Value,
                    a.Keperluan, a.Skbn.BerlakuMulai.Value,
-                   a.Skbn.BerlakuSelesai.Value,
-                   a.Skbn.TanggalPersetujuan.Value,a.Skbn.TangglPengambilan, a.Skbn.DiambilOleh);
-        if(!data.Any())
+                   a.Skbn.BerlakuSelesai.Value, a.Status,
+                   a.Skbn.TanggalPersetujuan.Value, a.Skbn.TangglPengambilan, a.Skbn.DiambilOleh, a.Skbn.DiSetujuiOleh);
+        if (!data.Any())
             return Enumerable.Empty<SKBNModel>();
         return data.AsEnumerable();
 
@@ -146,6 +147,21 @@ public class PermohonanService : IPermohonanService
         }
     }
 
+    public Task<bool> PostPersetujuan(int skbnid ,Pimpinan value)
+    {
+        var data = from a in dbContext.Permohonans
+                .Include(x => x.Skbn).Where(x=>x.Skbn!=null && x.Skbn.Id== skbnid)
+                select a;
+
+        var permohonan = data.FirstOrDefault();
+        ArgumentNullException.ThrowIfNull(permohonan, "SKBN Belum Dibuat, Hubungi Administror !");
+        permohonan.Skbn.DiSetujuiOleh = value;
+        permohonan.Status= StatusPermohonan.Disetujui;
+        permohonan.Skbn.TanggalPersetujuan = DateTime.Now;
+        dbContext.SaveChanges();
+        return Task.FromResult(true);
+    }
+
     public Task<Permohonan> Put(int id, Permohonan model)
     {
         try
@@ -161,6 +177,22 @@ public class PermohonanService : IPermohonanService
             if (model.Skbn != null)
             {
                 oldData.Skbn = model.Skbn;
+                var lastSKBN = dbContext.Permohonans.Include(x => x.Skbn).Where(x => x.Skbn != null)
+                    .Select(x => x.Skbn)
+                    .OrderByDescending(x => x.Id).FirstOrDefault();
+
+                if (lastSKBN == null)
+                    oldData.Skbn.Nomor = (1).ToString("D3");
+                else
+                {
+                    if (int.TryParse(lastSKBN.Nomor, out int lastid))
+                    {
+                        lastid++;
+                        oldData.Skbn.Nomor = (lastid).ToString("D3");
+                    }
+                }
+
+
             }
             dbContext.SaveChanges();
             return Task.FromResult(model);

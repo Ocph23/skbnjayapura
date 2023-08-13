@@ -68,7 +68,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">NIK</label>
-                        <InputText readonly type="text" ValueExpression="@(() => model.NomorNIK)" class="form-control"></InputText>
+                        <InputText readonly type="text" @bind-Value="model.NomorNIK" class="form-control"></InputText>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Jenis Kelamin</label>

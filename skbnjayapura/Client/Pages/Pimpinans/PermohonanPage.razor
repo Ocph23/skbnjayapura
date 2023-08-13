@@ -1,23 +1,25 @@
-﻿@layout AdminLayout
-@page "/admin/persyaratan"
+﻿@layout PimpinanLayout
+@page "/pimpinan/permohonan"
 
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Pimpinan")]
+
+@inject NavigationManager navManager
+
 <div class="container-xxl flex-grow-1 container-p-y">
     <div class="card">
         <div style=" display:flex;justify-content:space-between; align-items:center">
-            <h5 class="card-header">Data Persyaratan</h5>
-            <div>
-                <button @onclick="OnShowModalClick" class="btn btn-primary m-3">Add</button>
-            </div>
+            <h5 class="card-header">Data Permohonan</h5>
         </div>
         <div class="table-responsive text-nowrap">
             <table class="table table-hover">
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Nama Persyaratan</th>
-                        <th>Keterangan</th>
+                        <th>Nomor</th>
+                        <th>Keperluan</th>
+                        <th>Catatan</th>
                         <th>Status</th>
+                        <th>Tanggal Pengajuan</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -25,13 +27,15 @@
 
                     @if (persyaratans != null)
                     {
-                        @foreach (var item in persyaratans.Select((data,index)=> new {data,index}))
-                            {
+                        @foreach (var item in persyaratans.Select((data, index) => new { data, index }))
+                        {
                             <tr>
-                                <td>@(item.index+1)</td>
-                                <td>@item.data.Nama</td>
-                                <td>@item.data.Keterangan</td>
-                                <td><span class="badge bg-label-primary me-1">@(item.data.Aktif ? "Active" : "No")</span></td>
+                                <td>@(item.index + 1)</td>
+                                <td>@item.data.Nomor</td>
+                                <td>@item.data.Keperluan</td>
+                                <td>@item.data.Catatan</td>
+                                <td> <span class="badge rounded-pill bg-warning">@item.data.Status</span></td>
+                                <td>@item.data.TanggalPengajuan.Value.ToString("dd-MM-yyyy")</td>
                                 <td>
                                     <div class="dropdown" style="position:inherit !important">
                                         <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
@@ -44,56 +48,13 @@
                                     </div>
                                 </td>
                             </tr>
-
                         }
                     }
-
-
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
-<Modal @ref="modal" Title="TambahEdit" IsVerticallyCentered=true>
-    <BodyTemplate>
-        <EditForm Model="@model" OnValidSubmit="SaveAction">
-            <Morris.Blazor.Validation.Validate ValidationProperties=@(ValidationProperties.Set.FluentValidator<PersyaratanValidator>()) />
-            <div class="mb-3">
-                <label for="email" class="form-label">Nama Persyaratan</label>
-                <InputText type="text" @bind-Value="model.Nama" class="form-control"></InputText>
-                <ValidationMessage For="@(() => model.Nama)" />
-
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Keterangan</label>
-                <InputTextArea type="text" @bind-Value="model.Keterangan" class="form-control"></InputTextArea>
-                <ValidationMessage For="@(() => model.Keterangan)" />
-            </div>
-            <div class="mb-3">
-                <div class="form-check">
-                    <InputCheckbox @bind-Value="model.IsPhoto"></InputCheckbox>
-                    <label class="form-check-label"> Jika Photo , Gunakan Sebagai Foto Profile </label>
-                </div>
-            </div>
-
-            @if (model.Id > 0)
-            {
-                <div class="mb-3">
-                    <div class="form-check">
-                        <InputCheckbox @bind-Value="model.Aktif"></InputCheckbox>
-                        <label class="form-check-label"> Aktif </label>
-                    </div>
-                </div>
-            }
-
-            <div class="mb-3" style="display:flex;justify-content:end; gap:2px">
-                <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Close</Button>
-                <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Save changes</Button>
-            </div>
-        </EditForm>
-    </BodyTemplate>
-</Modal>
 
 <ConfirmDialog @ref="confirmDialog" />
 
@@ -102,33 +63,49 @@
 
 @code {
     [Inject] protected ToastService ToastService { get; set; }
-    ICollection<Persyaratan> persyaratans;
-    Persyaratan model = new Persyaratan();
-    private Modal modal;
+    ICollection<Permohonan> persyaratans;
+    Permohonan model = new Permohonan();
     private ConfirmDialog confirmDialog;
-
     //  List<ToastMessage> messages = new List<ToastMessage>();
-
+    bool haveAccess = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await httpClient.SetToken(localService);
-        var response = await httpClient.GetAsync("api/persyaratan");
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            persyaratans = (await response.GetResult<IEnumerable<Persyaratan>>()).ToList();
+            await httpClient.SetToken(localService);
+
+            var response1 = await httpClient.GetAsync("api/pimpinan/byuser");
+            if (response1.IsSuccessStatusCode)
+            {
+                var profilex = await response1.GetResult<Pimpinan>();
+                  ArgumentNullException.ThrowIfNull(profilex, "Silahkan Lengkapi Data Profile Anda !");;
+               
+                    if (!profilex.Active)
+                        throw new SystemException("Accoun Anda Tidak Aktif, Hubungi Administrator !");
+                    else
+                        haveAccess = true;
+            }
+            else
+              {  throw new SystemException("Silahkan Lengkapi Data Profile Anda !");}
+
+            var response = await httpClient.GetAsync("api/permohonan");
+
+            if (response.IsSuccessStatusCode)
+            {
+                persyaratans = (await response.GetResult<IEnumerable<Permohonan>>()).ToList();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
         }
     }
 
-    async Task EditAction(Persyaratan data)
+    void EditAction(Permohonan data)
     {
-        model.Id = data.Id;
-        model.Nama = data.Nama;
-        model.Keterangan = data.Keterangan;
-        model.IsPhoto = data.IsPhoto;
-        model.Aktif = data.Aktif;
-        await modal.ShowAsync();
+        navManager.NavigateTo($"/pimpinan/permohonan/{data.Id}");
     }
 
     async Task SaveAction()
@@ -137,15 +114,14 @@
         {
             if (model.Id <= 0)
             {
-                var httpResponse = await httpClient.PostAsJsonAsync<Persyaratan>("api/persyaratan", model);
+                var httpResponse = await httpClient.PostAsJsonAsync<Permohonan>("api/persyaratan", model);
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    var result = await httpResponse.GetResult<Persyaratan>();
+                    var result = await httpResponse.GetResult<Permohonan>();
                     if (result == null)
                         throw new SystemException("Data tidak berhasil disimpan !");
                     persyaratans.Add(result);
                     ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
-                    await modal.HideAsync();
                     return;
                 }
 
@@ -154,10 +130,10 @@
             }
             else
             {
-                var httpResponse = await httpClient.PutAsJsonAsync<Persyaratan>($"api/persyaratan/{model.Id}", model);
+                var httpResponse = await httpClient.PutAsJsonAsync<Permohonan>($"api/persyaratan/{model.Id}", model);
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    var result = await httpResponse.GetResult<Persyaratan>();
+                    var result = await httpResponse.GetResult<Permohonan>();
                     if (result == null)
                         throw new SystemException("Data tidak berhasil diubah !");
 
@@ -165,13 +141,12 @@
                     if (data != null)
                     {
                         data.Id = result.Id;
-                        data.Nama = result.Nama;
-                        data.Keterangan = result.Keterangan;
-                        data.IsPhoto = result.IsPhoto;
-                        data.Aktif = result.Aktif;
+                        data.Keperluan = result.Keperluan;
+                        data.Catatan = result.Catatan;
+                        data.TanggalPengajuan = result.TanggalPengajuan;
+                        data.Profile = result.Profile;
                     }
                     ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil !"));
-                    await modal.HideAsync();
                     return;
                 }
 
@@ -184,7 +159,7 @@
         }
     }
 
-    async Task DeleteAction(Persyaratan value)
+    async Task DeleteAction(Permohonan value)
     {
         try
         {
@@ -197,18 +172,17 @@
                 };
             var confirmation = await confirmDialog.ShowAsync(
                 title: "Delete",
-                message1: "Hapus Persyaratan ??",
+                message1: "Hapus Permohonan ??",
                 confirmDialogOptions: options);
             if (confirmation)
             {
-                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/persyaratan/{value.Id}");
+                var deleted = await httpClient.DeleteFromJsonAsync<bool>($"api/permohonan/{value.Id}");
                 if (deleted)
                 {
 
                     var data = persyaratans.SingleOrDefault(x => x.Id == value.Id);
                     persyaratans.Remove(data);
                     ToastService.Notify(new ToastMessage(ToastType.Success, "Success", "Berhasil Hapus Data !"));
-                    await modal.HideAsync();
                     await InvokeAsync(() => StateHasChanged());
                     return;
                 }
@@ -220,17 +194,4 @@
             ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
         }
     }
-
-    private async Task OnShowModalClick()
-    {
-        model = new Persyaratan() { Aktif = true };
-        await modal?.ShowAsync();
-    }
-    private async Task OnHideModalClick()
-    {
-        await modal?.HideAsync();
-    }
-
-
-
 }

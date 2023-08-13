@@ -56,9 +56,9 @@
                             </div>
                             <ValidationMessage For="@(() => model.ConfirmPassword)" />
                         </div>
-                     
+
                         <div class="mb-3">
-                            <button style="height:40px; color:white; background-color:#af1212" class="btn btn-primary d-grid w-100" type="submit">Register</button>
+                            <button disabled="@isRegister" style="height:40px; color:white; background-color:#af1212" class="btn btn-primary d-grid w-100" type="submit">Register</button>
                         </div>
                     </EditForm>
 
@@ -76,32 +76,48 @@
 </div>
 
 @code {
-
+    [Inject] protected ToastService? ToastService { get; set; }
     Register model = new Register();
-
-    async void RegisterAction()
+    bool isRegister = false;
+    async Task RegisterAction()
     {
-        var response = await httpClient.PostAsJsonAsync("api/account/register", new RegisterRequest(model.Email, model.Password, "Pemohon"));
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var contentString = await response.Content.ReadAsStringAsync();
-            AuthenticateResponse result = await response.GetResult<AuthenticateResponse>();
-            if (result != null)
+            isRegister = true;
+            var response = await httpClient.PostAsJsonAsync("api/account/register", new RegisterRequest(model.Email, model.Password, "Pemohon"));
+            if (response.IsSuccessStatusCode)
             {
-                await localService.SetItemAsync("token", result.Token);
-                await localService.SetItemAsync("userName", result.UserName);
-                await localService.SetItemAsync("email", result.Email);
-                await authStateProvider.GetAuthenticationStateAsync();
-                if (navManager.Uri.ToString().ToLower().Contains("/account/register"))
-                    navManager.NavigateTo("/");
-                else
-                    navManager.NavigateTo(navManager.Uri);
+                var contentString = await response.Content.ReadAsStringAsync();
+                AuthenticateResponse result = await response.GetResult<AuthenticateResponse>();
+                if (result != null)
+                {
+                    await localService.SetItemAsync("token", result.Token);
+                    await localService.SetItemAsync("userName", result.UserName);
+                    await localService.SetItemAsync("email", result.Email);
+                    await authStateProvider.GetAuthenticationStateAsync();
+                    if (navManager.Uri.ToString().ToLower().Contains("/account/register"))
+                        navManager.NavigateTo("/");
+                    else
+                        navManager.NavigateTo(navManager.Uri);
+                }
             }
+            else
+            {
+                throw new SystemException(await response.Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.Notify(new ToastMessage(ToastType.Danger, "Error", ex.Message));
+        }
+        finally
+        {
+            isRegister = false;
         }
 
     }
 
-    
-   
+
+
 
 }

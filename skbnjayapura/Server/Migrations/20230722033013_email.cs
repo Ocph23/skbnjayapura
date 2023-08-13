@@ -5,14 +5,14 @@
 namespace skbnjayapura.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class _fotoProfile : Migration
+    public partial class email : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "Photo",
-                table: "Profiles",
+                name: "Email",
+                table: "Pimpinans",
                 type: "longtext",
                 nullable: true)
                 .Annotation("MySql:CharSet", "utf8mb4");
@@ -22,8 +22,8 @@ namespace skbnjayapura.Server.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Photo",
-                table: "Profiles");
+                name: "Email",
+                table: "Pimpinans");
         }
     }
 }

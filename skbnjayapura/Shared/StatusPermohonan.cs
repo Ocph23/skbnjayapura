@@ -5,7 +5,8 @@
         Baru,
         Verifikasi,
         Terbit,
-        Diambil ,
+        Disetujui,
+        Diambil,
         Tolak
     }
 }

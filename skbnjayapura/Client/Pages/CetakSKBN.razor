@@ -1,4 +1,8 @@
-﻿@if (model != null)
+﻿@using System.Drawing;
+@using QRCoder;
+@using System.Drawing.Imaging;
+
+@if (model != null)
 {
     <div class="container justprint" style="width:100%">
         <div class="containerbackground" style="width:100%">
@@ -120,9 +124,9 @@
                     <div style="display:flex; align-items:center; justify-content:end;flex-direction:column">
                         <label>a.n. KEPALA KEPOLISIAN RESORT JAYAPURA KOTA</label>
                         <label>P.s KASAT RESERSE NARKOBA</label>
-                        <img style="width:70px; margin:0px" src="/tandatangan.png">
-                        <label style="margin-top:-10px; text-decoration:underline"><b>ALAMSYAH ALI, SH., MH</b></label>
-                        <label><b>IPTU NRP 82 70055</b></label>
+                          <img style="width: 70px; margin:20px" src="data:image/png;base64,@QRText" alt="QR Code">
+                        <label style="margin-top:-10px; text-decoration:underline"><b>@pimpinanNama</b></label>
+                        <label><b>@pangkatAndNRP</b></label>
                     </div>
                 </div>
 
@@ -174,4 +178,32 @@
 @code {
     [Parameter]
     public SKBNModel model { get; set; }
+
+    string pimpinanNama=string.Empty;
+    string pangkatAndNRP=string.Empty;
+    public string QRText;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(model!=null &&  model.DisetujuiOleh!=null){
+            pimpinanNama = model.DisetujuiOleh.Name.ToUpper();
+            pangkatAndNRP = $"{model.DisetujuiOleh.Pangkat.ToUpper()} NRP {model.DisetujuiOleh.NRP}";
+            GenerateQRCode($"{model.Nomor} | {pimpinanNama} | {pangkatAndNRP}");
+        }
+
+    }
+
+
+     public void GenerateQRCode(string qrCodeText)
+    {
+        if (!string.IsNullOrEmpty(qrCodeText))
+        {
+            var qrGenerator = new QRCodeGenerator();
+        var qrData = qrGenerator.CreateQrCode(qrCodeText,QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new PngByteQRCode(qrData);
+        var QRByte = qrCode.GetGraphic(20);
+            QRText= Convert.ToBase64String(QRByte);
+        }
+    }
+
 }

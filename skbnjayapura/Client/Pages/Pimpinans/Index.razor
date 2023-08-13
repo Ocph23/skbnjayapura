@@ -1,11 +1,13 @@
-﻿@page "/"
+﻿@layout PimpinanLayout
+@page "/pimpinan"
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager nav
 
 <PageTitle>Index</PageTitle>
-<div class="container-xxl flex-grow-1 container-p-y" style="margin:30px">
-    <img style="width:150px; margin:30px" src="/polri.png" />
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <img style="width:100px; margin:30px" src="/polri.png" />
     <h3>KEPOLISIAN REPUBLIK INDONESIA</h3>
     <h3>DAERAH PAPUA</h3>
     <h5>RESORT KOTA JAYAPURA KOTA</h5>
@@ -13,7 +15,7 @@
 
     Aplikasi Pembuatan Surat Keterangan Bebas Narkoba !
     <SurveyPrompt Title="Rastra Sewakottama" />
-    <img style="width:30%; opacity:0.3; position:absolute; right:10px; bottom:10px" src="/logosatnarkoba.png" />
+    <img style="width:30%; opacity:0.2; position:absolute; right:10px; bottom:10px" src="/logosatnarkoba.png" />
 </div>
 
 
@@ -24,14 +26,9 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        if (user.Identity.IsAuthenticated)
+        if (!user.Identity.IsAuthenticated || !user.IsInRole("Pimpinan"))
         {
-            if (user.IsInRole("Admin"))
-                nav.NavigateTo("admin");
-            if (user.IsInRole("Pemohon"))
-                nav.NavigateTo("pemohon");
-            if (user.IsInRole("Pimpinan"))
-                nav.NavigateTo("pimpinan");
+            nav.NavigateTo("/account/login");
         }
     }
 

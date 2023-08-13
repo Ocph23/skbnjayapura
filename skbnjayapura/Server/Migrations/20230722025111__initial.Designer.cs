@@ -11,15 +11,15 @@ using skbnjayapura.Server.Datas;
 namespace skbnjayapura.Server.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230531032132__model")]
-    partial class _model
+    [Migration("20230722025111__initial")]
+    partial class _initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.5")
+                .HasAnnotation("ProductVersion", "7.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -227,22 +227,25 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("FileName")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("PermohoanId")
+                    b.Property<int?>("PermohonanId")
                         .HasColumnType("int");
 
                     b.Property<int>("PersyaratanId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Verifikasi")
+                        .HasColumnType("tinyint(1)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("PermohoanId");
+                    b.HasIndex("PermohonanId");
 
                     b.HasIndex("PersyaratanId");
 
                     b.ToTable("ItemPersyaratan");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -260,6 +263,9 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<int?>("SkbnId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("TanggalPengajuan")
                         .HasColumnType("datetime(6)");
 
@@ -269,7 +275,7 @@ namespace skbnjayapura.Server.Migrations
 
                     b.HasIndex("SkbnId");
 
-                    b.ToTable("Permohoans");
+                    b.ToTable("Permohonans");
                 });
 
             modelBuilder.Entity("skbnjayapura.Shared.Persyaratan", b =>
@@ -278,9 +284,8 @@ namespace skbnjayapura.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Aktif")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<bool>("Aktif")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsPhoto")
                         .HasColumnType("tinyint(1)");
@@ -295,7 +300,36 @@ namespace skbnjayapura.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Persyaratan");
+                    b.ToTable("Persyaratans");
+                });
+
+            modelBuilder.Entity("skbnjayapura.Shared.Pimpinan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Jabatan")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("NRP")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Pangkat")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Pimpinans");
                 });
 
             modelBuilder.Entity("skbnjayapura.Shared.Profile", b =>
@@ -307,11 +341,13 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("Agama")
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("Aktif")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Alamat")
                         .HasColumnType("longtext");
 
                     b.Property<string>("JenisKelamin")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Kebangsaan")
@@ -323,10 +359,16 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<string>("NomorHP")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("NomorNIK")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Pekerjaan")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("TanggalLahir")
+                    b.Property<string>("Photo")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("TanggalLahir")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("TempatLahir")
@@ -352,10 +394,22 @@ namespace skbnjayapura.Server.Migrations
                     b.Property<DateTime?>("BerlakuSelesai")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("DiambilOleh")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Nomor")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("NomorSKPN")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("TanggalPersetujuan")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("TanggalSKPN")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("TangglPengambilan")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -419,9 +473,9 @@ namespace skbnjayapura.Server.Migrations
 
             modelBuilder.Entity("skbnjayapura.Shared.ItemPersyaratan", b =>
                 {
-                    b.HasOne("skbnjayapura.Shared.Permohoan", null)
+                    b.HasOne("skbnjayapura.Shared.Permohonan", null)
                         .WithMany("ItemPersyaratan")
-                        .HasForeignKey("PermohoanId");
+                        .HasForeignKey("PermohonanId");
 
                     b.HasOne("skbnjayapura.Shared.Persyaratan", "Persyaratan")
                         .WithMany()
@@ -432,7 +486,7 @@ namespace skbnjayapura.Server.Migrations
                     b.Navigation("Persyaratan");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.HasOne("skbnjayapura.Shared.Profile", "Profile")
                         .WithMany()
@@ -447,7 +501,7 @@ namespace skbnjayapura.Server.Migrations
                     b.Navigation("Skbn");
                 });
 
-            modelBuilder.Entity("skbnjayapura.Shared.Permohoan", b =>
+            modelBuilder.Entity("skbnjayapura.Shared.Permohonan", b =>
                 {
                     b.Navigation("ItemPersyaratan");
                 });

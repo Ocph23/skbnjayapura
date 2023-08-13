@@ -15,5 +15,6 @@ namespace skbnjayapura.Server.Services.AuthService
         Task<bool> VerifikasiPersyaratan(ItemPersyaratan model);
         IEnumerable<SKBNModel> GetSKBN();
         Task<Pengambilan> PostPengambilan(Pengambilan value);
+        Task<bool> PostPersetujuan(int permohonanid, Pimpinan value);
     }
 }

@@ -7,5 +7,6 @@ using System.Threading.Tasks;
 namespace skbnjayapura.Shared
 {
     public record SKBNModel( int Id, string Nomor, Profile Profile, string NomorSKPN, DateTime TanggalSKPN, 
-        string Keperluan, DateTime Mulai, DateTime Selesai, DateTime TanggalPenetapan, DateTime? TanggalPengambilan, string DiambilOleh);
+        string Keperluan, DateTime Mulai, DateTime Selesai, StatusPermohonan Status, DateTime TanggalPenetapan, DateTime? TanggalPengambilan, 
+        string DiambilOleh, Pimpinan DisetujuiOleh=null);
 }
